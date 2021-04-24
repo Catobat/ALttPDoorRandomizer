@@ -89,6 +89,7 @@ SETTINGSTOPROCESS = {
       "keydropshuffle": "keydropshuffle",
       "dungeondoorshuffle": "door_shuffle",
       "dungeonintensity": "intensity",
+      "dungeon_state": "dungeon_state",
       "potshuffle": "shufflepots",
       "experimental": "experimental",
       "dungeon_counters": "dungeon_counters",

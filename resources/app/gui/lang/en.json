@@ -64,6 +64,11 @@
     "randomizer.dungeon.dungeonintensity.3": "3: Dungeon Lobbies",
     "randomizer.dungeon.dungeonintensity.random": "Random",
 
+    "randomizer.dungeon.dungeon_state": "Dungeon State",
+    "randomizer.dungeon.dungeon_state.separate": "Separate",
+    "randomizer.dungeon.dungeon_state.connected": "Connected",
+    "randomizer.dungeon.dungeon_state.combined": "Combined",
+
     "randomizer.dungeon.potshuffle": "Pot Shuffle",
     "randomizer.dungeon.experimental": "Enable Experimental Features",
 

@@ -94,7 +94,7 @@ def parse_cli(argv, no_defaults=False):
                          'retro', 'accessibility', 'hints', 'beemizer', 'experimental', 'dungeon_counters',
                          'shufflebosses', 'shuffleenemies', 'enemy_health', 'enemy_damage', 'shufflepots',
                          'ow_palettes', 'uw_palettes', 'sprite', 'disablemusic', 'quickswap', 'fastmenu', 'heartcolor', 'heartbeep',
-                         'remote_items', 'shopsanity', 'keydropshuffle', 'mixed_travel', 'standardize_palettes', 'code']:
+                         'remote_items', 'shopsanity', 'keydropshuffle', 'dungeon_state', 'mixed_travel', 'standardize_palettes', 'code']:
                 value = getattr(defaults, name) if getattr(playerargs, name) is None else getattr(playerargs, name)
                 if player == 1:
                     setattr(ret, name, {1: value})
@@ -143,6 +143,7 @@ def parse_settings():
         "keysanity": False,
         "door_shuffle": "basic",
         "intensity": 2,
+        "dungeon_state": "separate",
         "experimental": False,
         "dungeon_counters": "default",
         "mixed_travel": "prevent",

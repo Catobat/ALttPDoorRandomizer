@@ -158,6 +158,8 @@ def roll_settings(weights):
 
     ret.shopsanity = get_choice('shopsanity') == 'on'
     ret.keydropshuffle = get_choice('keydropshuffle') == 'on'
+    dungeon_state = get_choice('dungeon_state')
+    ret.dungeon_state = dungeon_state if dungeon_state != 'none' else 'separate'
     ret.mixed_travel = get_choice('mixed_travel') if 'mixed_travel' in weights else 'prevent'
     ret.standardize_palettes = get_choice('standardize_palettes') if 'standardize_palettes' in weights else 'standardize'
 

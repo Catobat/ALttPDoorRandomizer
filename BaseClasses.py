@@ -133,6 +133,7 @@ class World(object):
 
             set_player_attr('shopsanity', False)
             set_player_attr('keydropshuffle', False)
+            set_player_attr('dungeon_state', 'separate')
             set_player_attr('mixed_travel', 'prevent')
             set_player_attr('standardize_palettes', 'standardize')
             set_player_attr('force_fix', {'gt': False, 'sw': False, 'pod': False, 'tr': False})
@@ -1965,6 +1966,7 @@ class Spoiler(object):
                          'experimental': self.world.experimental,
                          'keydropshuffle': self.world.keydropshuffle,
                          'shopsanity': self.world.shopsanity,
+                         'dungeon_state': self.world.dungeon_state,
                          'code': {p: Settings.make_code(self.world, p) for p in range(1, self.world.players + 1)}
                          }
 
@@ -2031,6 +2033,7 @@ class Spoiler(object):
                 outfile.write('Experimental:                    %s\n' % ('Yes' if self.metadata['experimental'][player] else 'No'))
                 outfile.write('Key Drops shuffled:              %s\n' % ('Yes' if self.metadata['keydropshuffle'][player] else 'No'))
                 outfile.write(f"Shopsanity:                      {'Yes' if self.metadata['shopsanity'][player] else 'No'}\n")
+                outfile.write('Dungeon State:                   %s\n' % self.metadata['dungeon_state'][player])
             if self.doors:
                 outfile.write('\n\nDoors:\n\n')
                 outfile.write('\n'.join(
@@ -2192,9 +2195,10 @@ access_mode = {"items": 0, "locations": 1, "none": 2}
 boss_mode = {"none": 0, "simple": 1, "full": 2, "random": 3}
 enemy_mode = {"none": 0, "shuffled": 1, "random": 2}
 
-# byte 7: HHHD DP?? (enemy_health, enemy_dmg, potshuffle, ?)
+# byte 7: HHHD DPSS (enemy_health, enemy_dmg, potshuffle, dungeon_state)
 e_health = {"default": 0, "easy": 1, "normal": 2, "hard": 3, "expert": 4}
 e_dmg = {"default": 0, "shuffled": 1, "random": 2}
+dungeon_mode = {"separate": 0, "connected": 1, "combined": 2}
 
 class Settings(object):
 
@@ -2223,7 +2227,7 @@ class Settings(object):
             | (0x20 if w.mapshuffle[p] else 0) | (0x10 if w.compassshuffle[p] else 0)
             | (boss_mode[w.boss_shuffle[p]] << 2) | (enemy_mode[w.enemy_shuffle[p]]),
 
-            (e_health[w.enemy_health[p]] << 5) | (e_dmg[w.enemy_damage[p]] << 3) | (0x4 if w.potshuffle[p] else 0)])
+            (e_health[w.enemy_health[p]] << 5) | (e_dmg[w.enemy_damage[p]] << 3) | (0x4 if w.potshuffle[p] else 0) | dungeon_mode[w.dungeon_state[p]]])
         return base64.b64encode(code, "+-".encode()).decode()
 
     @staticmethod
@@ -2247,6 +2251,7 @@ class Settings(object):
         args.retro[p] = True if settings[1] & 0x01 else False
         args.shopsanity[p] = True if settings[3] & 0x80 else False
         args.keydropshuffle[p] = True if settings[3] & 0x40 else False
+        args.dungeon_state[p] = r(dungeon_mode)[settings[7] & 0x03]
         args.mixed_travel[p] = r(mixed_travel_mode)[(settings[3] & 0x30) >> 4]
         args.standardize_palettes[p] = "original" if settings[3] & 0x8 else "standardize"
         intensity = settings[3] & 0x7

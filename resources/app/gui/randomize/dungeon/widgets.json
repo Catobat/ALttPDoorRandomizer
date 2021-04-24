@@ -22,6 +22,15 @@
         "width": 45
       }
     },
+    "dungeon_state": {
+      "type": "selectbox",
+      "default": "separate",
+      "options": [
+        "separate",
+        "connected",
+        "combined"
+      ]
+    },
     "potshuffle": { "type": "checkbox" },
     "experimental": { "type": "checkbox" },
     "dungeon_counters": {

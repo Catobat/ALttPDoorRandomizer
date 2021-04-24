@@ -67,6 +67,13 @@
     "action": "store_true",
     "type": "bool"
   },
+  "dungeon_state" : {
+    "choices": [
+      "separate",
+      "connected",
+      "combined"
+    ]
+  },
   "mixed_travel" : {
     "choices": [
       "prevent",

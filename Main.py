@@ -84,6 +84,7 @@ def main(args, seed=None, fish=None):
     world.fish = fish
     world.shopsanity = args.shopsanity.copy()
     world.keydropshuffle = args.keydropshuffle.copy()
+    world.dungeon_state = args.dungeon_state.copy()
     world.mixed_travel = args.mixed_travel.copy()
     world.standardize_palettes = args.standardize_palettes.copy()
 
@@ -374,6 +375,7 @@ def copy_world(world):
     ret.experimental = world.experimental.copy()
     ret.shopsanity = world.shopsanity.copy()
     ret.keydropshuffle = world.keydropshuffle.copy()
+    ret.dungeon_state = world.dungeon_state.copy()
     ret.mixed_travel = world.mixed_travel.copy()
     ret.standardize_palettes = world.standardize_palettes.copy()
 
