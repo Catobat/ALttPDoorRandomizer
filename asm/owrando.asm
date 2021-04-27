@@ -30,6 +30,11 @@ OWOppSlotOffset: ; Amount to offset OW Slot
 db 8, -8, 1, -1 ; OW Slot x2 $700
 OWOppDirectionOffset: ; Amount to offset coord calc
 db $10, $f0, $02, $fe
+OWCameraRangeIndex:
+db 2, 2, 0, 0 ; For OWCameraRange
+OWCameraRange:
+dw $011E, $0100 ; Length of the range the camera can move on small screens
+
 OWEdgeTransition:
 {
     php
@@ -186,7 +191,7 @@ OWNewDestination:
     ldx OWCoordIndex,y : lda $20,x : and #$fe00 : pha : lda $20,x : and #$01ff : pha ;s1 = relative cur, s3 = ow cur
     lda $06 : and #$fe00 : !sub 3,s : pha ;set coord, s1 = ow diff, s3 = relative cur, s5 = ow cur
     lda $06 : and #$01ff : !sub 3,s : pha ;s1 = rel diff, s3 = ow diff, s5 = relative cur, s7 = ow cur
-    lda $06 : sta $20,x ;set coord
+    lda $06 : sta $20,x : and #$fe00 : sta $06 ;set coord
     ldx OWBGIndex,y : lda $e2,x : !add 1,s : !add 3,s : sta $e2,x
     ldx OWCameraIndex,y : lda $618,x : !add 1,s : !add 3,s : sta $618,x
     ldx OWCameraIndex,y : lda $61a,x : !add 1,s : !add 3,s : sta $61a,x
@@ -194,6 +199,24 @@ OWNewDestination:
     pha : ldx OWBGIndex,y : lda $e0,x : !add 1,s : sta $e0,x
     pla : ldx OWBGIndex,y : lda $e0,x : !add 1,s : sta $e0,x
     pla : pla : pla
+
+    ;fix camera unlock
+    lda $e2,x : !sub $06 : bpl +
+        pha
+        lda $06 : sta $e2,x
+        ldx.w OWCameraIndex,y : lda $0618,x : !sub 1,s : sta $0618,x
+        lda $061a,x : !sub 1,s : sta $061a,x
+        pla
+        bra ++
+    +
+    lda $06 : ldx.w OWCameraRangeIndex,y : !add.w OWCameraRange,x : sta $06
+    ldx.w OWBGIndex,y : !sub $e2,x : bcs ++
+        pha
+        lda $06 : sta $e2,x
+        ldx.w OWCameraIndex,y : lda $0618,x : !add 1,s : sta $0618,x
+        lda $061a,x : !add 1,s : sta $061a,x
+        pla
+    ++
 
     ;opposite coord stuff
     rep #$30 : lda OWOppDirectionOffset,y : and #$00ff : bit #$0080 : beq +
