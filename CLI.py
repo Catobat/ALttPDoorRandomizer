@@ -142,7 +142,7 @@ def parse_settings():
         # Shuffle Ganon defaults to TRUE
         "openpyramid": False,
         "shuffleganon": True,
-        "ow_shuffle": "vanilla",
+        "ow_shuffle": "full",
         "ow_keepsimilar": False,
         "shuffle": "vanilla",
 
