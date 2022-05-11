@@ -3141,6 +3141,17 @@ class Spoiler(object):
                         if self.world.players > 1:
                             outfile.write(str('(Player ' + str(player) + ')\n')) # player name
                         outfile.write(self.maps[('swaps', player)]['text'] + '\n\n')
+                
+                # grouped
+                for player in range(1, self.world.players + 1):
+                    if ('groups', player) in self.maps:
+                        outfile.write('OW Crossed Groups:\n')
+                        break
+                for player in range(1, self.world.players + 1):
+                    if ('groups', player) in self.maps:
+                        if self.world.players > 1:
+                            outfile.write(str('(Player ' + str(player) + ')\n')) # player name
+                        outfile.write(self.maps[('groups', player)]['text'] + '\n\n')
 
             if self.overworlds:
                 # overworld transitions
