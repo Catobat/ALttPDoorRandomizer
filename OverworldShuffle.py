@@ -542,7 +542,7 @@ def connect_two_way(world, edgename1, edgename2, player, connected_edges=None):
                     # TODO: Figure out why non-parallel edges are getting into parallel groups
                     raise KeyError('No parallel edge for edge %s' % edgename2)
 
-def shuffle_tiles(world, groups, result_list, for_grouped, player):#TODO skip parity in grouped
+def shuffle_tiles(world, groups, result_list, for_grouped, player):
     swapped_edges = list()
     if not for_grouped:
         group_parity = {}
