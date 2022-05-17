@@ -637,7 +637,7 @@ def shuffle_tiles(world, groups, result_list, for_grouped, player):
     exist_dw_regions.extend(new_results[2])
 
     # replace LW edges with DW
-    if world.owCrossed[player] not in ['polar', 'grouped', 'chaos']:
+    if world.owCrossed[player] not in ['polar', 'grouped', 'chaos'] or for_grouped:
         # in polar, the actual edge connections remain vanilla
         def getSwappedEdges(world, lst, player):
             for regionname in lst:
