@@ -544,55 +544,54 @@ def connect_two_way(world, edgename1, edgename2, player, connected_edges=None):
 
 def shuffle_tiles(world, groups, result_list, for_grouped, player):
     swapped_edges = list()
-    if not for_grouped:
-        group_parity = {}
-        for group_data in groups:
-            group = group_data[0]
-            parity = [0, 0, 0, 0, 0]
-            # vertical land
-            if 0x00 in group:
-                parity[0] += 1
-            if 0x0f in group:
-                parity[0] += 1
-            if 0x80 in group:
-                parity[0] -= 1
-            if 0x81 in group:
-                parity[0] -= 1
-            # horizontal land
-            if 0x1a in group:
-                parity[1] -= 1
-            if 0x1b in group:
-                parity[1] += 1
-            if 0x28 in group:
-                parity[1] += 1
-            if 0x29 in group:
-                parity[1] -= 1
-            if 0x30 in group:
-                parity[1] -= 2
-            if 0x3a in group:
-                parity[1] += 2
-            # horizontal water
-            if 0x2d in group:
-                parity[2] += 1
-            if 0x80 in group:
-                parity[2] -= 1
-            # whirlpool
-            if 0x0f in group:
-                parity[3] += 1
-            if 0x12 in group:
-                parity[3] += 1
-            if 0x33 in group:
-                parity[3] += 1
-            if 0x35 in group:
-                parity[3] += 1
-            # dropdown exit
-            if 0x00 in group or 0x02 in group or 0x13 in group or 0x15 in group or 0x18 in group or 0x22 in group:
-                parity[4] += 1
-            if 0x1b in group and world.mode[player] != 'standard':
-                parity[4] += 1
-            if 0x1b in group and world.shuffle_ganon:
-                parity[4] -= 1
-            group_parity[group[0]] = parity
+    group_parity = {}
+    for group_data in groups:
+        group = group_data[0]
+        parity = [0, 0, 0, 0, 0]
+        # vertical land
+        if 0x00 in group:
+            parity[0] += 1
+        if 0x0f in group:
+            parity[0] += 1
+        if 0x80 in group:
+            parity[0] -= 1
+        if 0x81 in group:
+            parity[0] -= 1
+        # horizontal land
+        if 0x1a in group:
+            parity[1] -= 1
+        if 0x1b in group:
+            parity[1] += 1
+        if 0x28 in group:
+            parity[1] += 1
+        if 0x29 in group:
+            parity[1] -= 1
+        if 0x30 in group:
+            parity[1] -= 2
+        if 0x3a in group:
+            parity[1] += 2
+        # horizontal water
+        if 0x2d in group:
+            parity[2] += 1
+        if 0x80 in group:
+            parity[2] -= 1
+        # whirlpool
+        if 0x0f in group:
+            parity[3] += 1
+        if 0x12 in group:
+            parity[3] += 1
+        if 0x33 in group:
+            parity[3] += 1
+        if 0x35 in group:
+            parity[3] += 1
+        # dropdown exit
+        if 0x00 in group or 0x02 in group or 0x13 in group or 0x15 in group or 0x18 in group or 0x22 in group:
+            parity[4] += 1
+        if 0x1b in group and world.mode[player] != 'standard':
+            parity[4] += 1
+        if 0x1b in group and world.shuffle_ganon:
+            parity[4] -= 1
+        group_parity[group[0]] = parity
 
     attempts = 1000
     while True:
@@ -616,19 +615,18 @@ def shuffle_tiles(world, groups, result_list, for_grouped, player):
                 exist_lw_regions.extend(lw_regions)
                 exist_dw_regions.extend(dw_regions)
 
-        if not for_grouped:
-            parity = [sum(group_parity[group[0][0]][i] for group in groups if group not in removed) for i in range(5)]
-            parity[3] %= 2 # actual parity
-            if world.owCrossed[player] == 'none' and parity[:4] != [0, 0, 0, 0]:
+        parity = [sum(group_parity[group[0][0]][i] for group in groups if group not in removed) for i in range(5)]
+        parity[3] %= 2 # actual parity
+        if (world.owCrossed[player] == 'none' or for_grouped) and parity[:4] != [0, 0, 0, 0]:
+            attempts -= 1
+            continue
+        # ensure sanc can be placed in LW in certain modes
+        if not for_grouped and world.shuffle[player] not in ['vanilla', 'dungeonssimple', 'dungeonsfull', 'lean', 'crossed', 'insanity'] and world.mode[player] != 'inverted' and (world.doorShuffle[player] != 'crossed' or world.intensity[player] < 3 or world.mode[player] == 'standard'):
+            free_dw_drops = parity[4] + (1 if world.shuffle_ganon else 0)
+            free_drops = 6 + (1 if world.mode[player] != 'standard' else 0) + (1 if world.shuffle_ganon else 0)
+            if free_dw_drops == free_drops:
                 attempts -= 1
                 continue
-            # ensure sanc can be placed in LW in certain modes
-            if world.shuffle[player] not in ['vanilla', 'dungeonssimple', 'dungeonsfull', 'lean', 'crossed', 'insanity'] and world.mode[player] != 'inverted' and (world.doorShuffle[player] != 'crossed' or world.intensity[player] < 3 or world.mode[player] == 'standard'):
-                free_dw_drops = parity[4] + (1 if world.shuffle_ganon else 0)
-                free_drops = 6 + (1 if world.mode[player] != 'standard' else 0) + (1 if world.shuffle_ganon else 0)
-                if free_dw_drops == free_drops:
-                    attempts -= 1
-                    continue
         break
 
     (exist_owids, exist_lw_regions, exist_dw_regions) = result_list
@@ -697,13 +695,13 @@ def define_tile_groups(world, player, for_grouped):
     if world.shuffle[player] == 'vanilla' or (world.mode[player] == 'standard' and world.shuffle[player] in ['dungeonssimple', 'dungeonsfull']):
         merge_groups([[0x13, 0x14, 0x1b]])
 
-    if (world.owShuffle[player] == 'vanilla' and world.owCrossed[player] == 'none') or for_grouped:
+    if world.owShuffle[player] == 'vanilla' and (world.owCrossed[player] == 'none' or for_grouped):
         merge_groups([[0x00, 0x2d, 0x80], [0x0f, 0x81], [0x1a, 0x1b], [0x28, 0x29], [0x30, 0x3a]])
 
     if world.owShuffle[player] == 'parallel' and world.owKeepSimilar[player] and world.owCrossed[player] == 'none':
         merge_groups([[0x28, 0x29]])
 
-    if (not world.owWhirlpoolShuffle[player] and world.owCrossed[player] == 'none') or for_grouped:
+    if not world.owWhirlpoolShuffle[player] and (world.owCrossed[player] == 'none' or for_grouped):
         merge_groups([[0x0f, 0x35], [0x12, 0x15, 0x33, 0x3f]])
 
     tile_groups = []
