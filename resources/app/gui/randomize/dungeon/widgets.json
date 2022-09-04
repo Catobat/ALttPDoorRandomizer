@@ -1,6 +1,6 @@
 {
   "widgets": {
-    "keyshuffle": {
+    "smallkeyshuffle": {
       "type": "selectbox",
       "options": [
         "standard",
