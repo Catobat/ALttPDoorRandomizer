@@ -110,6 +110,7 @@ def main(args, seed=None, fish=None):
     world.intensity = {player: random.randint(1, 3) if args.intensity[player] == 'random' else int(args.intensity[player]) for player in range(1, world.players + 1)}
     world.door_type_mode = args.door_type_mode.copy()
     world.decoupledoors = args.decoupledoors.copy()
+    world.selfloops = args.selfloops.copy()
     world.experimental = args.experimental.copy()
     world.dungeon_counters = args.dungeon_counters.copy()
     world.fish = fish
@@ -470,6 +471,7 @@ def copy_world(world):
     ret.beemizer = world.beemizer.copy()
     ret.intensity = world.intensity.copy()
     ret.decoupledoors = world.decoupledoors.copy()
+    ret.selfloops = world.selfloops.copy()
     ret.experimental = world.experimental.copy()
     ret.shopsanity = world.shopsanity.copy()
     ret.dropshuffle = world.dropshuffle.copy()

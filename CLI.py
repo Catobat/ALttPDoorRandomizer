@@ -135,7 +135,7 @@ def parse_cli(argv, no_defaults=False):
                          'ow_palettes', 'uw_palettes', 'sprite', 'disablemusic', 'quickswap', 'fastmenu', 'heartcolor',
                          'heartbeep', 'remote_items', 'shopsanity', 'dropshuffle', 'pottery', 'keydropshuffle',
                          'mixed_travel', 'standardize_palettes', 'code', 'reduce_flashing', 'shuffle_sfx',
-                         'msu_resume', 'collection_rate', 'colorizepots', 'decoupledoors', 'door_type_mode']:
+                         'msu_resume', 'collection_rate', 'colorizepots', 'decoupledoors', 'selfloops', 'door_type_mode']:
                 value = getattr(defaults, name) if getattr(playerargs, name) is None else getattr(playerargs, name)
                 if player == 1:
                     setattr(ret, name, {1: value})
@@ -209,6 +209,7 @@ def parse_settings():
         "intensity": 2,
         'door_type_mode': 'original',
         'decoupledoors': False,
+        'selfloops': False,
         "experimental": False,
         "dungeon_counters": "default",
         "mixed_travel": "prevent",

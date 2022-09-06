@@ -85,6 +85,7 @@ def roll_settings(weights):
     ret.intensity = get_choice('intensity')
     ret.door_type_mode = get_choice('door_type_mode')
     ret.decoupledoors = get_choice('decoupledoors') == 'on'
+    ret.selfloops = get_choice('selfloops') == 'on'
     ret.experimental = get_choice('experimental') == 'on'
     ret.collection_rate = get_choice('collection_rate') == 'on'
 

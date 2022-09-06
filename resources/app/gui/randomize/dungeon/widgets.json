@@ -45,6 +45,7 @@
       }
     },
     "decoupledoors": { "type": "checkbox" },
+    "selfloops": { "type": "checkbox" },
     "keydropshuffle": { "type": "checkbox" },
     "pottery": {
       "type": "selectbox",

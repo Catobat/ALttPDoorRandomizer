@@ -22,7 +22,7 @@ def generate_dungeon(builder, entrance_region_names, split_dungeon, world, playe
     queue = collections.deque(proposed_map.items())
     while len(queue) > 0:
         a, b = queue.popleft()
-        if world.decoupledoors[player]:
+        if a == b or world.decoupledoors[player]:
             connect_doors_one_way(a, b)
         else:
             connect_doors(a, b)
@@ -124,14 +124,14 @@ def create_random_proposal(doors_to_connect, world, player):
         next_hook = random.choice(hooks_left)
         primary_door = random.choice(primary_bucket[next_hook])
         opp_hook, secondary_door = type_map[next_hook], None
-        while (secondary_door is None or secondary_door == primary_door
+        while (secondary_door is None or (not world.selfloops[player] and secondary_door == primary_door)
                or decouple_check(primary_bucket[next_hook], secondary_bucket[opp_hook],
                                  primary_door, secondary_door, world, player)):
             secondary_door = random.choice(secondary_bucket[opp_hook])
         proposal[primary_door] = secondary_door
         primary_bucket[next_hook].remove(primary_door)
         secondary_bucket[opp_hook].remove(secondary_door)
-        if not world.decoupledoors[player]:
+        if primary_door != secondary_door and not world.decoupledoors[player]:
             proposal[secondary_door] = primary_door
             primary_bucket[opp_hook].remove(secondary_door)
             secondary_bucket[next_hook].remove(primary_door)

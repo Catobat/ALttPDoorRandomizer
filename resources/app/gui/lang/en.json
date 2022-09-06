@@ -59,6 +59,7 @@
     "randomizer.dungeon.bigkeyshuffle": "Big Keys",
     "randomizer.dungeon.keydropshuffle": "Key Drop Shuffle (Legacy)",
     "randomizer.dungeon.decoupledoors": "Decouple Doors",
+    "randomizer.dungeon.selfloops": "Allow self-loops",
     "randomizer.dungeon.dropshuffle": "Shuffle Enemy Key Drops",
     "randomizer.dungeon.potshuffle": "Pot Shuffle (Legacy)",
     "randomizer.dungeon.pottery": "Pottery",

@@ -191,6 +191,10 @@
     "action": "store_true",
     "type": "bool"
   },
+  "selfloops": {
+    "action": "store_true",
+    "type": "bool"
+  },
   "experimental": {
     "action": "store_true",
     "type": "bool"

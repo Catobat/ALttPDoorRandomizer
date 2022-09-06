@@ -99,6 +99,7 @@ SETTINGSTOPROCESS = {
       "dungeonintensity": "intensity",
       "door_type_mode": "door_type_mode",
       "decoupledoors": "decoupledoors",
+      "selfloops": "selfloops",
       "keydropshuffle": "keydropshuffle",
       "dropshuffle": "dropshuffle",
       "pottery": "pottery",

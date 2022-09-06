@@ -237,6 +237,7 @@
       "chaos:    Increases the number of door types in all dungeon pools"
     ],
     "decoupledoors" : [ "Door entrances and exits are decoupled" ],
+    "selfloops" : [ "Spiral stairs are allowed to loop with themselves" ],
     "experimental": [ "Enable experimental features. (default: %(default)s)" ],
     "dungeon_counters": [ "Enable dungeon chest counters. (default: %(default)s)" ],
     "crystals_ganon": [
