@@ -3,7 +3,7 @@
     "smallkeyshuffle": {
       "type": "selectbox",
       "options": [
-        "standard",
+        "none",
         "wild",
         "universal"
       ]

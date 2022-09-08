@@ -251,7 +251,7 @@ def previously_reserved(location, world, player):
         if world.restrict_boss_items[player] == 'dungeon' and (not world.compassshuffle[player]
                                                                or not world.mapshuffle[player]
                                                                or not world.bigkeyshuffle[player]
-                                                               or world.keyshuffle[player] == 'standard'):
+                                                               or world.keyshuffle[player] == 'none'):
             return True
     return False
 

@@ -53,7 +53,7 @@
     "randomizer.dungeon.mapshuffle": "Maps",
     "randomizer.dungeon.compassshuffle": "Compasses",
     "randomizer.dungeon.smallkeyshuffle": "Small Keys",
-    "randomizer.dungeon.smallkeyshuffle.standard": "In Dungeon",
+    "randomizer.dungeon.smallkeyshuffle.none": "In Dungeon",
     "randomizer.dungeon.smallkeyshuffle.wild": "Randomized",
     "randomizer.dungeon.smallkeyshuffle.universal": "Universal",
     "randomizer.dungeon.bigkeyshuffle": "Big Keys",

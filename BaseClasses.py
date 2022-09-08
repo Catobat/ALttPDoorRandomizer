@@ -113,7 +113,7 @@ class World(object):
             set_player_attr('fix_fake_world', logic[player] not in ['owglitches', 'nologic'] or shuffle[player] in ['crossed', 'insanity'])
             set_player_attr('mapshuffle', False)
             set_player_attr('compassshuffle', False)
-            set_player_attr('keyshuffle', 'standard')
+            set_player_attr('keyshuffle', 'none')
             set_player_attr('bigkeyshuffle', False)
             set_player_attr('restrict_boss_items', 'none')
             set_player_attr('bombbag', False)
@@ -2890,7 +2890,7 @@ boss_mode = {"none": 0, "simple": 1, "full": 2, "chaos": 3, 'random': 3, 'unique
 # byte 10: settings_version
 # byte 11: FBBB, TTSS (flute_mode, bow_mode, take_any, small_key_mode)
 flute_mode = {'normal': 0, 'active': 1}
-keyshuffle_mode = {'standard': 0, 'wild': 1, 'universal': 2}  # reserved 8 modes?
+keyshuffle_mode = {'none': 0, 'wild': 1, 'universal': 2}  # reserved 8 modes?
 take_any_mode = {'none': 0, 'random': 1, 'fixed': 2}
 bow_mode = {'progressive': 0, 'silvers': 1, 'retro': 2, 'retro_silver': 3}
 
