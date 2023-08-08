@@ -694,33 +694,33 @@ def shuffle_tiles(world, groups, result_list, do_grouped, player):
     if world.customizer:
         if not do_grouped:
             custom_flips = world.customizer.get_owtileflips()
-        if custom_flips and player in custom_flips:
-            custom_flips = custom_flips[player]
-            nonflipped_groups = list()
-            forced_flips = list()
-            forced_nonflips = list()
-            if 'undefined_chance' in custom_flips:
-                undefined_chance = custom_flips['undefined_chance']
-            if 'force_flip' in custom_flips:
-                forced_flips = custom_flips['force_flip']
-            if 'force_no_flip' in custom_flips:
-                forced_nonflips = custom_flips['force_no_flip']
+            if custom_flips and player in custom_flips:
+                custom_flips = custom_flips[player]
+                nonflipped_groups = list()
+                forced_flips = list()
+                forced_nonflips = list()
+                if 'undefined_chance' in custom_flips:
+                    undefined_chance = custom_flips['undefined_chance']
+                if 'force_flip' in custom_flips:
+                    forced_flips = custom_flips['force_flip']
+                if 'force_no_flip' in custom_flips:
+                    forced_nonflips = custom_flips['force_no_flip']
 
-            for group in groups:
-                if any(owid in group[0] for owid in forced_nonflips):
-                    nonflipped_groups.append(group)
-                if any(owid in group[0] for owid in forced_flips):
-                    flipped_groups.append(group)
+                for group in groups:
+                    if any(owid in group[0] for owid in forced_nonflips):
+                        nonflipped_groups.append(group)
+                    if any(owid in group[0] for owid in forced_flips):
+                        flipped_groups.append(group)
 
-            # Check if there are any groups that appear in both sets
-            if any(group in flipped_groups for group in nonflipped_groups):
-                raise GenerationException('Conflict found when flipping tiles')
-            
-            for g in nonflipped_groups:
-                always_removed.append(g)
-            if undefined_chance == 0:
-                for g in [g for g in groups if g not in flipped_groups + always_removed]:
+                # Check if there are any groups that appear in both sets
+                if any(group in flipped_groups for group in nonflipped_groups):
+                    raise GenerationException('Conflict found when flipping tiles')
+                
+                for g in nonflipped_groups:
                     always_removed.append(g)
+                if undefined_chance == 0:
+                    for g in [g for g in groups if g not in flipped_groups + always_removed]:
+                        always_removed.append(g)
     
     attempts = 1
     if 0 < undefined_chance < 100:
