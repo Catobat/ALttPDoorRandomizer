@@ -77,6 +77,19 @@ ow-tileflips:
       - 0x2c
       - 0x18
     undefined_chance: 50
+ow-flutespots:
+  1:
+    force:
+    - 0x00
+    - 0x12
+    - 0x18
+    - 0x1a
+    - 0x2f
+    - 0x30
+    - 0x35
+    forbid:
+    - 0x03
+    - 0x05
 entrances:
   1:
     entrances:

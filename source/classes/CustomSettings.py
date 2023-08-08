@@ -10,6 +10,7 @@ from pathlib import Path
 
 import RaceRandom as random
 from BaseClasses import LocationType, DoorType
+from OverworldShuffle import default_flute_connections, flute_data
 from source.tools.MysteryUtils import roll_settings, get_weights
 
 
@@ -199,6 +200,11 @@ class CustomSettings(object):
             return self.file_source['ow-tileflips']
         return None
 
+    def get_owflutespots(self):
+        if 'ow-flutespots' in self.file_source:
+            return self.file_source['ow-flutespots']
+        return None
+
     def get_entrances(self):
         if 'entrances' in self.file_source:
             return self.file_source['entrances']
@@ -354,6 +360,14 @@ class CustomSettings(object):
                 flips[p]['force_flip'] = list(HexInt(f) for f in world.owswaps[p][0] if f < 0x40 or f >= 0x80)
                 flips[p]['force_flip'].sort()
                 flips[p]['undefined_chance'] = 0
+        self.world_rep['ow-flutespots'] = flute = {}
+        for p in self.player_range:
+            flute[p] = {}
+            if p in world.owflutespots:
+                flute[p]['force'] = list(HexInt(id) for id in sorted(flute_data[f][1] for f in world.owflutespots[p]))
+            else:
+                flute[p]['force'] = list(HexInt(id) for id in sorted(flute_data[f][1] for f in default_flute_connections))
+            flute[p]['forbid'] = []
 
     def record_entrances(self, world):
         self.world_rep['entrances'] = entrances = {}
