@@ -219,9 +219,9 @@ ow-edges:
 ow-tileflips:
   1:
     force_together:
-      1:
+      Pedestal:
         - 0x00
         - 0x80
-      2:
+      Zora:
         - 0x0f
         - 0x81

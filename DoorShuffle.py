@@ -178,6 +178,7 @@ def create_door_spoiler(world, player):
     queue = deque(world.dungeon_layouts[player].values())
     while len(queue) > 0:
         builder = queue.popleft()
+        std_flag = world.mode[player] == 'standard' and builder.name == 'Hyrule Castle' and world.shuffle[player] == 'vanilla'
         done = set()
         start_regions = set(convert_regions(builder.layout_starts, world, player))  # todo: set all_entrances for basic
         reg_queue = deque(start_regions)
@@ -206,10 +207,14 @@ def create_door_spoiler(world, player):
                                 logger.warning('This is a bug during door spoiler')
                     elif not isinstance(door_b, Region):
                         logger.warning('Door not connected: %s', door_a.name)
-                if connect and connect.type == RegionType.Dungeon and connect not in visited:
+                if valid_connection(connect, std_flag, world, player) and connect not in visited:
                     visited.add(connect)
                     reg_queue.append(connect)
 
+
+def valid_connection(region, std_flag, world, player):
+    return region and (region.type == RegionType.Dungeon or region.name in world.inaccessible_regions[player] or
+                      (std_flag and region.name == 'Hyrule Castle Ledge'))
 
 def vanilla_key_logic(world, player):
     builders = []
@@ -3331,6 +3336,9 @@ def find_inaccessible_regions(world, player):
         ledge = world.get_region('Hyrule Castle Ledge', player)
         if any(x for x in ledge.exits if x.connected_region and x.connected_region.name == 'Agahnims Tower Portal'):
             world.inaccessible_regions[player].append('Hyrule Castle Ledge')
+    # this should be considered as part of the inaccessible regions, dungeonssimple?
+    if world.mode[player] == 'standard' and world.shuffle[player] == 'vanilla':
+        world.inaccessible_regions[player].append('Hyrule Castle Ledge')
     logger = logging.getLogger('')
     #logger.debug('Inaccessible Regions:')
     #for r in world.inaccessible_regions[player]:

@@ -8,7 +8,7 @@ from OWEdges import OWTileRegions, OWEdgeGroups, OWEdgeGroupsTerrain, OWExitType
 from OverworldGlitchRules import create_owg_connections
 from Utils import bidict
 
-version_number = '0.3.3.0'
+version_number = '0.3.3.1'
 # branch indicator is intentionally different across branches
 version_branch = ''
 
@@ -225,7 +225,8 @@ def link_overworld(world, player):
                     edge = world.get_owedge(edgename, player)
                     force_noncrossed.add(edge.name)
             if 'limit_crossed' in custom_crossed:
-                limited_crossed = custom_crossed['limit_crossed']
+                if world.owCrossed[player] == 'unrestricted':
+                    limited_crossed = custom_crossed['limit_crossed']
             if 'undefined_chance' in custom_crossed:
                 undefined_chance = custom_crossed['undefined_chance']
 
@@ -443,6 +444,23 @@ def link_overworld(world, player):
         connected_edge_cache = connected_edges.copy()
         groups_cache = copy.deepcopy(groups)
         while not valid_layout and tries > 0:
+            def remove_connected(forward_sets, back_sets):
+                deleted_edges = []
+                def remove_from_sets(sets):
+                    s = 0
+                    while s < len(sets):
+                        if sets[s][0] in connected_edges:
+                            deleted_edges.extend(sets[s])
+                            del sets[s]
+                            continue
+                        s += 1
+                remove_from_sets(forward_sets)
+                remove_from_sets(back_sets)
+                if len(forward_sets) != len(back_sets):
+                    x=', '.join(deleted_edges)
+                    x=0
+                assert len(forward_sets) == len(back_sets), "OW edge pool is uneven due to prior connections: " + ', '.join(deleted_edges)
+            
             def connect_set(forward_set, back_set, connected_edges):
                 if forward_set is not None and back_set is not None:
                     assert len(forward_set) == len(back_set)
@@ -467,32 +485,10 @@ def link_overworld(world, player):
             for key in groupKeys:
                 (mode, wrld, dir, terrain, parallel, count, _) = key
                 (forward_edge_sets, back_edge_sets) = groups[key]
-                def remove_connected():
-                    deleted_edges = []
-                    s = 0
-                    while s < len(forward_edge_sets):
-                        forward_set = forward_edge_sets[s]
-                        if forward_set[0] in connected_edges:
-                            deleted_edges.extend(forward_edge_sets[s])
-                            del forward_edge_sets[s]
-                            continue
-                        s += 1
-                    s = 0
-                    while s < len(back_edge_sets):
-                        back_set = back_edge_sets[s]
-                        if back_set[0] in connected_edges:
-                            deleted_edges.extend(back_edge_sets[s])
-                            del back_edge_sets[s]
-                            continue
-                        s += 1
-                    if len(forward_edge_sets) != len(back_edge_sets):
-                        x=', '.join(deleted_edges)
-                        x=0
-                    assert len(forward_edge_sets) == len(back_edge_sets), "OW edge pool is uneven due to prior connections: " + ', '.join(deleted_edges)
-                
-                remove_connected()
+                remove_connected(forward_edge_sets, back_edge_sets)
                 random.shuffle(forward_edge_sets)
                 random.shuffle(back_edge_sets)
+
                 if wrld is None and len(force_crossed) + len(force_noncrossed) > 0:
                     # divide forward/back sets into LW/DW
                     forward_lw_sets, forward_dw_sets = [], []
@@ -500,24 +496,20 @@ def link_overworld(world, player):
                     forward_parallel_lw_sets, forward_parallel_dw_sets = [], []
                     back_parallel_lw_sets, back_parallel_dw_sets = [], []
                     
+                    def add_edgeset_to_worldsets(edge_set, sets, parallel_sets):
+                        sets.append(edge_set)
+                        if parallel == IsParallel.Yes:
+                            parallel_sets.append([parallel_links_new[e] for e in edge_set])
                     for edge_set in forward_edge_sets:
                         if world.get_owedge(edge_set[0], player).is_lw(world):
-                            forward_lw_sets.append(edge_set)
-                            if parallel == IsParallel.Yes:
-                                forward_parallel_lw_sets.append([parallel_links_new[e] for e in edge_set])
+                            add_edgeset_to_worldsets(edge_set, forward_lw_sets, forward_parallel_lw_sets)
                         else:
-                            forward_dw_sets.append(edge_set)
-                            if parallel == IsParallel.Yes:
-                                forward_parallel_dw_sets.append([parallel_links_new[e] for e in edge_set])
+                            add_edgeset_to_worldsets(edge_set, forward_dw_sets, forward_parallel_dw_sets)
                     for edge_set in back_edge_sets:
                         if world.get_owedge(edge_set[0], player).is_lw(world):
-                            back_lw_sets.append(edge_set)
-                            if parallel == IsParallel.Yes:
-                                back_parallel_lw_sets.append([parallel_links_new[e] for e in edge_set])
+                            add_edgeset_to_worldsets(edge_set, back_lw_sets, back_parallel_lw_sets)
                         else:
-                            back_dw_sets.append(edge_set)
-                            if parallel == IsParallel.Yes:
-                                back_parallel_dw_sets.append([parallel_links_new[e] for e in edge_set])
+                            add_edgeset_to_worldsets(edge_set, back_dw_sets, back_parallel_dw_sets)
                     
                     crossed_sets = []
                     noncrossed_sets = []
@@ -526,7 +518,7 @@ def link_overworld(world, player):
                             affected_edges = set(sets[i]+(parallel_sets[i] if parallel == IsParallel.Yes else []))
                             if sets[i] not in crossed_sets and len(set.intersection(set(force_crossed), affected_edges)) > 0:
                                 crossed_sets.append(sets[i])
-                            if sets not in noncrossed_sets and len(set.intersection(set(force_noncrossed), affected_edges)) > 0:
+                            if sets[i] not in noncrossed_sets and len(set.intersection(set(force_noncrossed), affected_edges)) > 0:
                                 noncrossed_sets.append(sets[i])
                             if sets[i] in crossed_sets and sets[i] in noncrossed_sets:
                                 raise GenerationException('Conflict in force crossed/non-crossed definition')
@@ -536,50 +528,33 @@ def link_overworld(world, player):
                     add_to_crossed_sets(back_dw_sets, back_parallel_dw_sets)
 
                     # random connect forced crossed/noncrossed
-                    c = 0
-                    while c < len(noncrossed_sets):
-                        if noncrossed_sets[c] in forward_edge_sets:
-                            forward_set = noncrossed_sets[c]
-                            if forward_set in forward_lw_sets:
-                                back_set = next(s for s in back_lw_sets if s in back_edge_sets and s not in crossed_sets)
+                    def connect_forced(forced_sets, is_crossed, opposite_sets=[]):
+                        c = 0
+                        while c < len(forced_sets):
+                            if forced_sets[c] in forward_edge_sets:
+                                forward_set = forced_sets[c]
+                                if (forward_set in forward_lw_sets) != is_crossed:
+                                    back_set = next(s for s in back_lw_sets if s in back_edge_sets and s not in opposite_sets)
+                                else:
+                                    back_set = next(s for s in back_dw_sets if s in back_edge_sets and s not in opposite_sets)
+                            elif forced_sets[c] in back_edge_sets:
+                                back_set = forced_sets[c]
+                                if (back_set in back_lw_sets) != is_crossed:
+                                    forward_set = next(s for s in forward_lw_sets if s in forward_edge_sets and s not in opposite_sets)
+                                else:
+                                    forward_set = next(s for s in forward_dw_sets if s in forward_edge_sets and s not in opposite_sets)
                             else:
-                                back_set = next(s for s in back_dw_sets if s in back_edge_sets and s not in crossed_sets)
-                        elif noncrossed_sets[c] in back_edge_sets:
-                            back_set = noncrossed_sets[c]
-                            if back_set in back_lw_sets:
-                                forward_set = next(s for s in forward_lw_sets if s in forward_edge_sets and s not in crossed_sets)
-                            else:
-                                forward_set = next(s for s in forward_dw_sets if s in forward_edge_sets and s not in crossed_sets)
-                        else:
+                                c = c + 1
+                                continue
+                            connect_set(forward_set, back_set, connected_edges)
+                            remove_connected(forward_edge_sets, back_edge_sets)
                             c = c + 1
-                            continue
-                        connect_set(forward_set, back_set, connected_edges)
-                        remove_connected()
-                        c = c + 1
-                    c = 0
-                    while c < len(crossed_sets):
-                        if crossed_sets[c] in forward_edge_sets:
-                            forward_set = crossed_sets[c]
-                            if forward_set in forward_lw_sets:
-                                back_set = next(s for s in back_dw_sets if s in back_edge_sets)
-                            else:
-                                back_set = next(s for s in back_lw_sets if s in back_edge_sets)
-                        elif crossed_sets[c] in back_edge_sets:
-                            back_set = crossed_sets[c]
-                            if back_set in back_lw_sets:
-                                forward_set = next(s for s in forward_dw_sets if s in forward_edge_sets)
-                            else:
-                                forward_set = next(s for s in forward_lw_sets if s in forward_edge_sets)
-                        else:
-                            c = c + 1
-                            continue
-                        connect_set(forward_set, back_set, connected_edges)
-                        remove_connected()
-                        c = c + 1
+                    connect_forced(noncrossed_sets, False, crossed_sets)
+                    connect_forced(crossed_sets, True)
                 
                 while len(forward_edge_sets) > 0 and len(back_edge_sets) > 0:
                     connect_set(forward_edge_sets[0], back_edge_sets[0], connected_edges)
-                    remove_connected()
+                    remove_connected(forward_edge_sets, back_edge_sets)
             assert len(connected_edges) == len(default_connections) * 2, connected_edges
             
             world.owsectors[player] = build_sectors(world, player)
@@ -1266,6 +1241,7 @@ def adjust_edge_groups(world, trimmed_groups, edges_to_swap, player):
     if world.customizer:
         custom_crossed = world.customizer.get_owcrossed()
         limited_crossed = custom_crossed and (player in custom_crossed) and ('limit_crossed' in custom_crossed[player])
+        limited_crossed = limited_crossed and world.owCrossed[player] == 'unrestricted'
         custom_edge_groups = world.customizer.get_owedges()
         if custom_edge_groups and player in custom_edge_groups:
             custom_edge_groups = custom_edge_groups[player]
@@ -1483,18 +1459,6 @@ def build_sectors(world, player):
             else:
                 sectors2.append(explored_regions)
         sectors[s] = sectors2
-
-    #TODO: Keep largest LW sector for Links House consideration, keep sector containing WDM for Old Man consideration
-    # sector_entrances = list()
-    # for sector in sectors:
-    #     entrances = list()
-    #     for s2 in sector:
-    #         for region_name in s2:
-    #             region = world.get_region(region_name, player)
-    #             for exit in region.exits:
-    #                 if exit.spot_type == 'Entrance' and exit.name in entrance_pool:
-    #                     entrances.append(exit.name)
-    #     sector_entrances.append(entrances)
     
     return sectors
 
@@ -2559,7 +2523,7 @@ isolated_regions = [
 ]
 
 flute_data = {
-    #Slot    LW Region                         DW Region                            OWID   VRAM    BG Y    BG X   Link Y  Link X   Cam Y   Cam X   Unk1    Unk2   IconY   IconX    AltY    AltX  AltVRAM  AltBGY  AltBGX  AltCamY AltCamX AltUnk1 AltUnk2 AltIconY AltIconX
+    #OWID    LW Region                         DW Region                            Slot   VRAM    BG Y    BG X   Link Y  Link X   Cam Y   Cam X   Unk1    Unk2   IconY   IconX    AltY    AltX  AltVRAM  AltBGY  AltBGX  AltCamY AltCamX AltUnk1 AltUnk2 AltIconY AltIconX
     0x00: (['Lost Woods East Area',           'Skull Woods Forest'],                0x09, 0x1042, 0x022e, 0x0202, 0x0290, 0x0288, 0x029b, 0x028f, 0xfff2, 0x000e, 0x0290, 0x0288, 0x0290, 0x0290),
     0x02: (['Lumberjack Area',                'Dark Lumberjack Area'],              0x02, 0x059c, 0x00d6, 0x04e6, 0x0138, 0x0558, 0x0143, 0x0563, 0xfffa, 0xfffa, 0x0138, 0x0550),
     0x03: (['West Death Mountain (Bottom)',   'West Dark Death Mountain (Top)'],    0x0b, 0x1600, 0x02ca, 0x060e, 0x0328, 0x0678, 0x0337, 0x0683, 0xfff6, 0xfff2, 0x035b, 0x0680, 0x0118, 0x0860, 0x05c0, 0x00b8, 0x07ec, 0x0127, 0x086b, 0xfff8, 0x0004, 0x0148, 0x0850),

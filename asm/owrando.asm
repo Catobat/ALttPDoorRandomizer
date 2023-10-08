@@ -56,16 +56,17 @@ Link_ResetSwimmingState:
 
 
 ; mirror hooks
-org $02FBAB
-JSL OWMirrorSpriteRestore : NOP
+org $0283DC ; override world check when spawning mirror portal sprite in Crossed OWR
+jsl.l OWLightWorldOrCrossed
 org $05AF75
 Sprite_6C_MirrorPortal:
-jsl OWPreserveMirrorSprite : nop #2 ; LDA $7EF3CA : BNE $05AFDF
+jsl OWMirrorSpriteDisable ; LDA $7EF3CA
+org $05AF88
+jsl OWMirrorSpriteSkipDraw : NOP ; LDA.w $0FC6 : CMP.b #$03
 org $05AFDF
 Sprite_6C_MirrorPortal_missing_mirror:
-JML OWMirrorSpriteDelete : NOP ; STZ $0DD0,X : BRA $05AFF1
-org $0ABFBF
-JSL OWMirrorSpriteOnMap : BRA + : NOP #6 : +
+org $0ABFB6
+jsl OWMirrorSpriteOnMap : NOP ; LDA.w $008A : CMP.b #$40
 
 ; whirlpool shuffle cross world change
 org $02b3bd
@@ -99,10 +100,6 @@ jsl OWOldManSpeed
 ; Dark Bonk Rocks Rain Sequence Guards (allowing Tile Swap on Dark Bonk Rocks)
 ;org $09c957 ; <- 4c957
 ;dw #$cb5f ; matches value on Central Bonk Rocks screen
-
-; override world check when spawning mirror portal sprite in Crossed OWR
-org $0283dc
-jsl.l OWLightWorldOrCrossed
 
 ; override world check when viewing overworld (incl. title screen portion)
 org $0aba6c  ; < ? - Bank0a.asm:474 ()
@@ -171,6 +168,11 @@ phb : lda.b #$1E : pha : plb ; switch to bank 1E
 plb : rtl
 nop #3
 +
+
+; follower hooks
+;org $8689D9
+;SpritePrep_BombShoppe:
+;JML BombShoppe_ConditionalSpawn : NOP
 
 ;Code
 org $aa8800
@@ -257,65 +259,41 @@ OWDestroyItemSprites:
     DEX : BPL .nextSprite
     PLX : RTL
 }
+
 OWMirrorSpriteOnMap:
 {
-    lda.w $1ac0,x : bit.b #$f0 : beq .continue
-        lda.b #$00 : rtl
-    .continue
-    ora.w $1ab0,x
-    ora.w $1ad0,x
-    ora.w $1ae0,x
-    rtl
+    JSL OWWorldCheck
+    CMP.b #$40 ; part of what we wrote over
+    RTL
 }
-OWPreserveMirrorSprite:
+OWMirrorSpriteDisable:
 {
-    lda.l OWMode+1 : and.b #!FLAG_OW_CROSSED : beq .vanilla ; if OW Crossed, skip world check and continue
-        lda.b $10 : cmp.b #$0f : beq .vanilla ; if performing mirror superbunny
-            rtl
+    LDA.b $10 : CMP.b #$0F : BNE +  ; avoid rare freeze during mirror superbunny
+	    PLA : PLA : PLA : JML Sprite_6C_MirrorPortal_missing_mirror
+	+ 
+    
+    lda.l OWMode+1 : and.b #!FLAG_OW_CROSSED : beq .vanilla
+        lda.l InvertedMode : beq +
+            lda.b #$40
+        + rtl
     
     .vanilla
-    lda.l InvertedMode : beq +
-        lda.l CurrentWorld : beq .deleteMirror
-        rtl
-    + lda.l CurrentWorld : bne .deleteMirror
-        rtl
-
-    .deleteMirror
-    lda.b $10 : cmp.b #$0f : bne +
-        jsr.w OWMirrorSpriteMove ; if performing mirror superbunny
-    + pla : pla : pla : jml Sprite_6C_MirrorPortal_missing_mirror
-}
-OWMirrorSpriteMove:
-{
-    lda.l OWMode+1 : and.b #!FLAG_OW_CROSSED : beq +
-        lda.w $1acf : ora.b #$40 : sta.w $1acf
-    + rts
-}
-OWMirrorSpriteBonk:
-{
-    jsr.w OWMirrorSpriteMove
-    lda.b #$2c : jml SetGameModeLikeMirror ; what we wrote over
-}
-OWMirrorSpriteDelete:
-{
-    stz.w $0dd0,x ; what we wrote over
-    jsr.w OWMirrorSpriteMove
-    jml Sprite_6C_MirrorPortal_dont_do_warp
-}
-OWMirrorSpriteRestore:
-{
-    lda.l OWMode+1 : and.b #!FLAG_OW_CROSSED : beq .return
-        lda.l InvertedMode : beq +
-            lda.l CurrentWorld : beq .return
-            bra .restorePortal
-        + lda.l CurrentWorld : bne .return
-        
-    .restorePortal
-    lda.w $1acf : and.b #$0f : sta.w $1acf
-    
-    .return
-    rep #$30 : lda.w $04AC ; what we wrote over
+    lda.l CurrentWorld ; what we wrote over
     rtl
+}
+OWMirrorSpriteSkipDraw:
+{
+    lda.l OWMode+1 : and.b #!FLAG_OW_CROSSED : beq .vanilla
+        lda.l InvertedMode : beq +
+            lda.l CurrentWorld : eor.b #$40
+            bra ++
+        + lda.l CurrentWorld : ++ beq .vanilla
+            stz.w $0D90,x ; disables collision
+            sec : rtl
+    
+    .vanilla
+    LDA.w $0FC6 : CMP.b #$03 ; what we wrote over
+    RTL
 }
 OWLightWorldOrCrossed:
 {
@@ -563,6 +541,7 @@ OWBonkDrops:
     INX : LDA.w OWBonkPrizeData,X : PHX : PHA ; S = FlagBitmask, X (row + 2)
     LDX.b $8A : LDA.l OverworldEventDataWRAM,X : AND 1,S : PHA : BNE + ; S = Collected, FlagBitmask, X (row + 2)
         LDA.b #$1B : STA $12F ; JSL Sound_SetSfx3PanLong ; seems that when you bonk, there is a pending bonk sfx, so we clear that out and replace with reveal secret sfx
+        ; JSLSpriteSFX_QueueSFX3WithPan
     +
     LDA 3,S : TAX : INX : LDA.w OWBonkPrizeData,X
     PHA : INX : LDA.w OWBonkPrizeData,X : BEQ +
@@ -894,6 +873,7 @@ OWNewDestination:
             ++ lda $84 : !add 1,s : sta $84 : pla : pla
 
         .adjustMainAxis
+        ;LDA $84 : SEC : SBC #$0400 : AND #$0F80 : ASL : XBA : STA $88 ; vram
         LDA $84 : SEC : SBC #$0400 : AND #$0F00 : ASL : XBA : STA $88 ; vram
         LDA $84 : SEC : SBC #$0010 : AND #$003E : LSR : STA $86
 
@@ -956,6 +936,7 @@ OWNewDestination:
     sep #$30 : lda $04 : and #$3f : !add OWOppSlotOffset,y : asl : sta $700
     
     ; crossed OW shuffle and terrain
+    ;lda $8a : JSR OWDetermineScreensPaletteSet : STX $04
     ldx $05 : ldy $08 : jsr OWWorldTerrainUpdate
     
     ldx $8a : lda $05 : sta $8a : stx $05 ; $05 is prev screen id, $8a is dest screen
@@ -1179,6 +1160,14 @@ OWEndScrollTransition:
     CMP.l Overworld_FinalizeEntryOntoScreen_Data,X ; what we wrote over
     RTL
 }
+
+; BombShoppe_ConditionalSpawn:
+; {
+;     nop
+;     INC.w $0BA0,X : LDA.b #$B5 ; what we wrote over
+;     JML SpritePrep_BombShoppe+5
+;     nop#20
+; }
 
 ;Data
 org $aaa000

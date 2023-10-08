@@ -1577,13 +1577,15 @@ def standard_rules(world, player):
                 add_rule(ent, lambda state: standard_escape_rule(state))
 
     set_rule(world.get_location('Zelda Pickup', player), lambda state: state.has('Big Key (Escape)', player))
-    set_rule(world.get_entrance('Hyrule Castle Throne Room Tapestry', player), lambda state: state.has('Zelda Herself', player))
     set_rule(world.get_entrance('Hyrule Castle Tapestry Backwards', player), lambda state: state.has('Zelda Herself', player))
 
     def check_rule_list(state, r_list):
         return True if len(r_list) <= 0 else r_list[0](state) and check_rule_list(state, r_list[1:])
     rule_list, debug_path = find_rules_for_zelda_delivery(world, player)
-    set_rule(world.get_location('Zelda Drop Off', player), lambda state: state.has('Zelda Herself', player) and check_rule_list(state, rule_list))
+    set_rule(world.get_entrance('Hyrule Castle Throne Room Tapestry', player),
+             lambda state: state.has('Zelda Herself', player) and check_rule_list(state, rule_list))
+    set_rule(world.get_location('Zelda Drop Off', player),
+             lambda state: state.has('Zelda Herself', player) and check_rule_list(state, rule_list))
 
     for entrance in ['Links House SC', 'Links House ES', 'Central Bonk Rocks SW', 'Hyrule Castle WN', 'Hyrule Castle ES',
                      'Bonk Fairy (Light)', 'Hyrule Castle Main Gate (South)', 'Hyrule Castle Main Gate (North)', 'Hyrule Castle Ledge Drop']:

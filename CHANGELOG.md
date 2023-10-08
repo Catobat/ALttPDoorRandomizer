@@ -1,9 +1,15 @@
 # Changelog
 
+## 0.3.3.1
+- \~Merged in DR v1.2.0.21~
+- Fixed issue with Old Man death spawning on Pyramid/Castle
+- Fixed issue with Mixed OWR + Flute Shuffle placing spots on large screens
+- Fixed issue with mirror portals disappearing in Crossed OWR
+- Added more OWR preset yamls + some fixes to the existing ones
+
 ## 0.3.3.0
 - Added Customizer support for all remaining OWR options
 - Added several OWR preset yamls (many ideas are thanks to Catobat)
-- Fixed issue with Mixed OWR + Flute Shuffle placing spots on large screens
 - Removed Limited Crossed OWR and renamed Chaos Crossed to Unrestricted Crossed
 
 ## 0.3.2.2

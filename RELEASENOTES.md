@@ -109,6 +109,10 @@ These are now independent of retro mode and have three options: None, Random, an
 
 # Bug Fixes and Notes
 
+* 1.2.0.21u
+  * Fix that should force items needed for leaving Zelda's cell to before the throne room, so S&Q isn't mandatory
+  * Small fix for Tavern Shuffle (thanks Catobat)
+  * Several small generation fixes 
 * 1.2.0.20u
   * New generation feature that allows Spiral Stair to link to themselves (thank Catobat)
   * Added logic for trap doors that could be opened using existing room triggers
