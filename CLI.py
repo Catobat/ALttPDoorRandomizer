@@ -140,7 +140,7 @@ def parse_cli(argv, no_defaults=False):
                          'shufflebosses', 'shuffleenemies', 'enemy_health', 'enemy_damage', 'shufflepots',
                          'ow_palettes', 'uw_palettes', 'sprite', 'disablemusic', 'quickswap', 'fastmenu', 'heartcolor',
                          'heartbeep', 'remote_items', 'shopsanity', 'dropshuffle', 'pottery', 'keydropshuffle',
-                         'mixed_travel', 'standardize_palettes', 'code', 'reduce_flashing', 'shuffle_sfx',
+                         'mixed_travel', 'standardize_palettes', 'code', 'reduce_flashing', 'shuffle_sfx', 'shuffle_songinstruments',
                          'msu_resume', 'collection_rate', 'colorizepots', 'decoupledoors', 'door_type_mode',
                          'bonk_drops', 'trap_door_mode', 'key_logic_algorithm', 'door_self_loops']:
                 value = getattr(defaults, name) if getattr(playerargs, name) is None else getattr(playerargs, name)
@@ -258,6 +258,7 @@ def parse_settings():
         "uw_palettes": "default",
         "reduce_flashing": False,
         "shuffle_sfx": False,
+        "shuffle_songinstruments": False,
         "msu_resume": False,
         "collection_rate": False,
 

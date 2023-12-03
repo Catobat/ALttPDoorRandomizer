@@ -29,6 +29,9 @@ BCS OWDetectTransitionReturn
 org $02a999
 jsl OWEdgeTransition : nop #4 ;LDA $02A4E3,X : ORA $7EF3CA
 
+org $02aa07
+JSL OWMarkVisited : NOP
+
 org $04e8ae
 JSL OWDetectSpecialTransition
 RTL : NOP
@@ -168,11 +171,6 @@ phb : lda.b #$1E : pha : plb ; switch to bank 1E
 plb : rtl
 nop #3
 +
-
-; follower hooks
-;org $8689D9
-;SpritePrep_BombShoppe:
-;JML BombShoppe_ConditionalSpawn : NOP
 
 ;Code
 org $aa8800
@@ -344,6 +342,16 @@ OWOldManSpeed:
     .vanilla
     lda #$0c : sta $5e ; what we wrote over
     rtl
+}
+OWMarkVisited:
+{
+    LDX.b $8A : STZ.w $0412 ; what we wrote over
+    LDA.b $10 : CMP.b #$14 : BCS .return
+        LDA.l OverworldEventDataWRAM,X
+        ORA.b #$80 : STA.l OverworldEventDataWRAM,X
+
+    .return
+    RTL
 }
 
 LoadMapDarkOrMixed:
@@ -541,7 +549,6 @@ OWBonkDrops:
     INX : LDA.w OWBonkPrizeData,X : PHX : PHA ; S = FlagBitmask, X (row + 2)
     LDX.b $8A : LDA.l OverworldEventDataWRAM,X : AND 1,S : PHA : BNE + ; S = Collected, FlagBitmask, X (row + 2)
         LDA.b #$1B : STA $12F ; JSL Sound_SetSfx3PanLong ; seems that when you bonk, there is a pending bonk sfx, so we clear that out and replace with reveal secret sfx
-        ; JSLSpriteSFX_QueueSFX3WithPan
     +
     LDA 3,S : TAX : INX : LDA.w OWBonkPrizeData,X
     PHA : INX : LDA.w OWBonkPrizeData,X : BEQ +
@@ -873,7 +880,6 @@ OWNewDestination:
             ++ lda $84 : !add 1,s : sta $84 : pla : pla
 
         .adjustMainAxis
-        ;LDA $84 : SEC : SBC #$0400 : AND #$0F80 : ASL : XBA : STA $88 ; vram
         LDA $84 : SEC : SBC #$0400 : AND #$0F00 : ASL : XBA : STA $88 ; vram
         LDA $84 : SEC : SBC #$0010 : AND #$003E : LSR : STA $86
 
@@ -936,7 +942,6 @@ OWNewDestination:
     sep #$30 : lda $04 : and #$3f : !add OWOppSlotOffset,y : asl : sta $700
     
     ; crossed OW shuffle and terrain
-    ;lda $8a : JSR OWDetermineScreensPaletteSet : STX $04
     ldx $05 : ldy $08 : jsr OWWorldTerrainUpdate
     
     ldx $8a : lda $05 : sta $8a : stx $05 ; $05 is prev screen id, $8a is dest screen
@@ -1160,14 +1165,6 @@ OWEndScrollTransition:
     CMP.l Overworld_FinalizeEntryOntoScreen_Data,X ; what we wrote over
     RTL
 }
-
-; BombShoppe_ConditionalSpawn:
-; {
-;     nop
-;     INC.w $0BA0,X : LDA.b #$B5 ; what we wrote over
-;     JML SpritePrep_BombShoppe+5
-;     nop#20
-; }
 
 ;Data
 org $aaa000

@@ -347,6 +347,10 @@
     "action": "store_true",
     "type": "bool"
   },
+  "shuffle_songinstruments": {
+    "action": "store_true",
+    "type": "bool"
+  },
   "msu_resume": {
     "action": "store_true",
     "type": "bool"

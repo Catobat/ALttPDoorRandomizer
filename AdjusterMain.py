@@ -10,6 +10,7 @@ except ImportError:
 
 from Utils import output_path
 from Rom import LocalRom, apply_rom_settings
+from source.classes.SFX import output_song_data
 from source.tools.BPS import bps_read_vlv
 
 
@@ -33,10 +34,13 @@ def adjust(args):
 
     apply_rom_settings(rom, args.heartbeep, args.heartcolor, args.quickswap, args.fastmenu, args.disablemusic,
                        args.sprite, args.ow_palettes, args.uw_palettes, args.reduce_flashing, args.shuffle_sfx,
-                       args.msu_resume)
+                       args.shuffle_songinstruments, args.msu_resume)
 
     output_path.cached_path = args.outputpath
     rom.write_to_file(output_path('%s.sfc' % outfilebase))
+
+    if args.shuffle_songinstruments:
+        output_song_data(rom, output_path('OR_SPCInstruments.txt'), outfilebase)
 
     logger.info('Done. Enjoy.')
     logger.debug('Total Time: %s', time.process_time() - start)
@@ -68,10 +72,13 @@ def patch(args):
 
     apply_rom_settings(rom, args.heartbeep, args.heartcolor, args.quickswap, args.fastmenu, args.disablemusic,
                        args.sprite, args.ow_palettes, args.uw_palettes, args.reduce_flashing, args.shuffle_sfx,
-                       args.msu_resume)
+                       args.shuffle_songinstruments, args.msu_resume)
 
     output_path.cached_path = args.outputpath
     rom.write_to_file(output_path('%s.sfc' % outfile_base))
+
+    if args.shuffle_songinstruments:
+        output_song_data(rom, output_path('OR_SPCInstruments.txt'), outfile_base)
 
     logger.info('Done. Enjoy.')
     logger.debug('Total Time: %s', time.process_time() - start)

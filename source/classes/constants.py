@@ -139,6 +139,7 @@ SETTINGSTOPROCESS = {
       "uwpalettes": "uw_palettes",
       "reduce_flashing": "reduce_flashing",
       "shuffle_sfx": "shuffle_sfx",
+      "shuffle_songinstruments": "shuffle_songinstruments",
       'msu_resume': 'msu_resume',
     },
     "generation": {

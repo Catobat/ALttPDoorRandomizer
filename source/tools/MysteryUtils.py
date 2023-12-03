@@ -219,6 +219,7 @@ def roll_settings(weights):
         ret.ow_palettes = get_choice('ow_palettes', romweights)
         ret.uw_palettes = get_choice('uw_palettes', romweights)
         ret.shuffle_sfx = get_choice('shuffle_sfx', romweights) == 'on'
+        ret.shuffle_songinstruments = get_choice('shuffle_songinstruments', romweights) == 'on'
         ret.msu_resume = get_choice('msu_resume', romweights) == 'on'
 
     return ret

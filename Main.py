@@ -35,8 +35,9 @@ from source.item.FillUtil import create_item_pool_config, massage_item_pool, dis
 from source.overworld.EntranceShuffle2 import link_entrances_new
 from source.tools.BPS import create_bps_from_data
 from source.classes.CustomSettings import CustomSettings
+from source.classes.SFX import output_song_data
 
-version_number = '1.2.0.21'
+version_number = '1.2.0.22'
 version_branch = '-u'
 __version__ = f'{version_number}{version_branch}'
 
@@ -393,7 +394,7 @@ def main(args, seed=None, fish=None):
                 apply_rom_settings(rom, args.heartbeep[player], args.heartcolor[player], args.quickswap[player],
                                    args.fastmenu[player], args.disablemusic[player], args.sprite[player],
                                    args.ow_palettes[player], args.uw_palettes[player], args.reduce_flashing[player],
-                                   args.shuffle_sfx[player], args.msu_resume[player])
+                                   args.shuffle_sfx[player], args.shuffle_songinstruments[player], args.msu_resume[player])
 
                 if args.jsonout:
                     jsonout[f'patch_t{team}_p{player}'] = rom.patches
@@ -404,6 +405,8 @@ def main(args, seed=None, fish=None):
                     if world.players > 1 or world.teams > 1:
                         outfilepname += f"_{world.player_names[player][team].replace(' ', '_')}" if world.player_names[player][team] != 'Player %d' % player else ''
                     outfilesuffix = f'_{Settings.make_code(world, player)}' if not args.outputname else ''
+                    if args.shuffle_songinstruments:
+                        output_song_data(rom, output_path('OR_SPCInstruments.txt'), outfilebase)
                     if args.bps:
                         patchfile = output_path(f'{outfilebase}{outfilepname}{outfilesuffix}.bps')
                         patch = create_bps_from_data(LocalRom(args.rom, patch=False).buffer, rom.buffer)

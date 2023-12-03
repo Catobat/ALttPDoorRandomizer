@@ -8,7 +8,7 @@ from OWEdges import OWTileRegions, OWEdgeGroups, OWEdgeGroupsTerrain, OWExitType
 from OverworldGlitchRules import create_owg_connections
 from Utils import bidict
 
-version_number = '0.3.3.1'
+version_number = '0.3.3.2'
 # branch indicator is intentionally different across branches
 version_branch = ''
 
@@ -1173,6 +1173,7 @@ def define_tile_groups(world, do_grouped, player):
                 (lw_regions if id < 0x40 or id >= 0x80 else dw_regions).extend(OWTileRegions.inverse[id])
             tile_groups.append((group, lw_regions, dw_regions))
 
+    random.shuffle(tile_groups)
     return tile_groups, flipped_groups, nonflipped_groups, undefined_chance
 
 def remove_reserved(world, groupedlist, connected_edges, player):
@@ -1378,7 +1379,7 @@ def can_reach_smith(world, player):
                     elif exit.connected_region.name == 'Blacksmiths Hut' and exit.access_rule(blank_state):
                         found = True
                         return
-                    elif exit.connected_region.name not in explored_regions:
+                    elif exit.connected_region.name not in explored_regions and exit.name != "Dig Game To Ledge Drop":
                         if (region.type == RegionType.Dungeon and exit.connected_region.name.endswith(' Portal')) \
                             or (exit.connected_region.type in [RegionType.LightWorld, RegionType.DarkWorld] \
                                 and exit.access_rule(blank_state)):
@@ -1623,7 +1624,7 @@ def validate_layout(world, player):
                             or (entrance.name == 'Big Bomb Shop' and (world.mode[player] != 'inverted' or not world.shufflelinks[player] or world.shuffle[player] in ['dungeonssimple', 'dungeonsfull', 'lite', 'lean'])) \
                             or (entrance.name == 'Ganons Tower' and (world.mode[player] != 'inverted' and not world.shuffle_ganon[player])) \
                             or (entrance.name in ['Skull Woods First Section Door', 'Skull Woods Second Section Door (East)', 'Skull Woods Second Section Door (West)'] and world.shuffle[player] not in ['insanity']) \
-                            or entrance.name == 'Tavern North':
+                            or (entrance.name == 'Tavern North' and not world.shuffletavern[player]):
                         continue # these are fixed entrances and cannot be used for gaining access to region
                     if entrance.name not in drop_entrances \
                             and ((entrance.name in dungeon_entrances and world.shuffle[player] not in ['dungeonssimple', 'simple', 'restricted']) \

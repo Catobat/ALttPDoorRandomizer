@@ -711,7 +711,10 @@ def do_links_house(entrances, exits, avail, cross_world):
                 connect_entrance(chosen_dm_escape, chosen_exit_start, avail)
                 connect_exit(chosen_exit_end, chosen_landing, avail)
                 entrances.remove(chosen_dm_escape)
+                avail.decoupled_exits.remove(chosen_exit_start)
                 avail.decoupled_entrances.remove(chosen_landing)
+                # chosen cave has already been removed from exits
+                exits.add(chosen_exit_start)  # this needs to be added back in
             if len(chosen_cave):
                 exits.update([x for x in chosen_cave])
             exits.update([x for item in multi_exit_caves for x in item])
@@ -1675,7 +1678,7 @@ def connect_entrance(entrancename, exit_name, avail):
 
 
 def connect_exit(exit_name, entrancename, avail):
-    world, player = avail.world, avail. player
+    world, player = avail.world, avail.player
     entrance = world.get_entrance(entrancename, player)
     exit = world.get_entrance(exit_name, player)
 

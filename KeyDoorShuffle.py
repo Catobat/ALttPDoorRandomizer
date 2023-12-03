@@ -1800,7 +1800,7 @@ def imp_locations_factory(world, player):
     imp_locations = ['Agahnim 1', 'Agahnim 2', 'Attic Cracked Floor', 'Suspicious Maiden']
     if world.mode[player] == 'standard':
         imp_locations.append('Zelda Pickup')
-        imp_locations.append('Zelda Dropoff')
+        imp_locations.append('Zelda Drop Off')
     return imp_locations
 
 

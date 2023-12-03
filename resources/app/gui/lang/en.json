@@ -4,6 +4,7 @@
     "adjust.quickswap": "L/R Quickswapping",
     "adjust.reduce_flashing": "Reduce Flashing",
     "adjust.shuffle_sfx": "Shuffle Sound Effects",
+    "adjust.shuffle_songinstruments": "Shuffle Song Instruments",
     "adjust.msu_resume": "MSU Resume",
 
     "adjust.heartcolor": "Heart Color",
@@ -190,6 +191,7 @@
     "randomizer.gameoptions.quickswap": "L/R Quickswapping",
     "randomizer.gameoptions.reduce_flashing": "Reduce Flashing",
     "randomizer.gameoptions.shuffle_sfx": "Shuffle Sound Effects",
+    "randomizer.gameoptions.shuffle_songinstruments": "Shuffle Song Instruments",
     "randomizer.gameoptions.msu_resume": "MSU Resume",
 
     "randomizer.gameoptions.heartcolor": "Heart Color",
@@ -391,7 +393,7 @@
     "bottom.content.dialog.error": "Error while creating seed",
     "bottom.content.dialog.success": "Success",
     "bottom.content.dialog.success.message": "Rom created successfully.",
-    "bottom.content.outputdir": "Open Output Directory",
+    "bottom.content.outputdir": "Select Destination",
     "bottom.content.docs": "Open Documentation"
   }
 }

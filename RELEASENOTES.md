@@ -109,6 +109,13 @@ These are now independent of retro mode and have three options: None, Random, an
 
 # Bug Fixes and Notes
 
+* 1.2.0.22u
+  * Flute can't be activated in rain state (except glitched modes) (Thanks codemann!)
+  * ER: Minor fix for Link's House on DM in Insanity (escape cave should not be re-used) 
+  * Logic issues:
+    * Self-locking key not allowed in Sanctuary in standard (typo fixed)
+    * More advanced bunny-walking logic in dungeons (multiple paths considred)
+  * MSU: GTBK song fix for DR (Thanks codemann!)
 * 1.2.0.21u
   * Fix that should force items needed for leaving Zelda's cell to before the throne room, so S&Q isn't mandatory
   * Small fix for Tavern Shuffle (thanks Catobat)

@@ -1627,7 +1627,7 @@ class Entrance(object):
                 explored_regions[region] = path
                 for exit in region.exits:
                     if exit.connected_region and (not ignore_ledges or exit.spot_type != 'Ledge') \
-                            and exit.connected_region.name not in ['Dig Game Area'] \
+                            and exit.name not in ['Dig Game To Ledge Drop'] \
                             and exit.access_rule(state):
                         if exit.connected_region == destination:
                             found = True

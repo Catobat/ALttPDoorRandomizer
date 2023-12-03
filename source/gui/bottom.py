@@ -154,6 +154,12 @@ def bottom_frame(self, parent, args=None):
 
         open_file(output_path('.'))
 
+    def select_output():
+        from tkinter import filedialog
+        folder_selected = filedialog.askdirectory()
+        if folder_selected is not None:
+            args.outputpath = parent.settings["outputpath"] = folder_selected
+
     ## Output Button
     # widget ID
     widget = "outputdir"
@@ -168,7 +174,7 @@ def bottom_frame(self, parent, args=None):
 
     # button
     self.widgets[widget].type = "button"
-    self.widgets[widget].pieces["button"] = Button(self, text='Open Output Directory', command=open_output)
+    self.widgets[widget].pieces["button"] = Button(self, text='Open Output Directory', command=select_output)
     # button: pack
     self.widgets[widget].pieces["button"].pack(side=RIGHT)
 
@@ -253,7 +259,10 @@ def create_guiargs(parent):
       "heartbeep": "heartbeep",
       "menuspeed": "fastmenu",
       "owpalettes": "ow_palettes",
-      "uwpalettes": "uw_palettes"
+      "uwpalettes": "uw_palettes",
+      "reduce_flashing": "reduce_flashing",
+      "shuffle_sfx": "shuffle_sfx",
+      "shuffle_songinstruments": "shuffle_songinstruments"
     }
     for adjustarg in adjustargs:
       internal = adjustargs[adjustarg]
