@@ -6,6 +6,10 @@ This can also be used to roll a mystery or mutli-mystery seed via the GUI. [Exam
 
 The cli includes a couple arguments to help:
 
+`--print_template_yaml` will create a yaml file based on the settings used. This does not contain any seed specific information.
+
+Present on the GUI as `Export Yaml` on the bottom.
+
 `--print_custom_yaml` will create a yaml file based on the seed rolled. Treat it like a spoiler.
 
 `--customizer` takes a file as an argument. 
@@ -44,7 +48,7 @@ Start inventory is not supported here. It has a separate section.
 
 ###### Not Yet Implemented
 
-Rom/Adjust flags like sprite, quickswap are not outputing with the print_custom_yaml settings 
+Rom/Adjust flags like sprite, quickswap are not outputing with the print_template_yaml or print_custom_yaml settings 
 
 ### item_pool
 

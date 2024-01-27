@@ -7,7 +7,7 @@ from typing import DefaultDict, Dict, List
 from itertools import chain
 
 from BaseClasses import RegionType, Region, Door, DoorType, Sector, CrystalBarrier, DungeonInfo, dungeon_keys
-from BaseClasses import PotFlags, LocationType, Direction
+from BaseClasses import PotFlags, LocationType, Direction, KeyRuleType
 from Doors import reset_portals
 from Dungeons import dungeon_regions, region_starts, standard_starts, split_region_starts
 from Dungeons import dungeon_bigs, dungeon_hints
@@ -261,8 +261,25 @@ def vanilla_key_logic(world, player):
             world.key_logic[player][builder.name] = key_layout.key_logic
             world.key_layout[player][builder.name] = key_layout
             log_key_logic(builder.name, key_layout.key_logic)
-    # if world.shuffle[player] == 'vanilla' and world.accessibility[player] == 'items' and not world.retro[player] and not world.keydropshuffle[player]:
-    #     validate_vanilla_key_logic(world, player)
+    # special adjustments for vanilla
+    if world.keyshuffle[player] != 'universal':
+        if world.mode[player] != 'standard' and not world.dropshuffle[player]:
+            # adjust hc doors
+            def adjust_hc_door(door_rule):
+                if door_rule.new_rules[KeyRuleType.WorstCase] == 3:
+                    door_rule.new_rules[KeyRuleType.WorstCase] = 2
+                    door_rule.small_key_num = 2
+
+            rules = world.key_logic[player]['Hyrule Castle'].door_rules
+            adjust_hc_door(rules['Sewers Secret Room Key Door S'])
+            adjust_hc_door(rules['Hyrule Dungeon Map Room Key Door S'])
+            adjust_hc_door(rules['Sewers Dark Cross Key Door N'])
+        # adjust pod front door
+        pod_front = world.key_logic[player]['Palace of Darkness'].door_rules['PoD Middle Cage N']
+        if pod_front.new_rules[KeyRuleType.WorstCase] == 6:
+            pod_front.new_rules[KeyRuleType.WorstCase] = 1
+            pod_front.small_key_num = 1
+        # gt logic? I'm unsure it needs adjusting
 
 
 def validate_vanilla_reservation(dungeon, world, player):

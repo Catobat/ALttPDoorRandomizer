@@ -8,7 +8,7 @@ from OWEdges import OWTileRegions, OWEdgeGroups, OWEdgeGroupsTerrain, OWExitType
 from OverworldGlitchRules import create_owg_connections
 from Utils import bidict
 
-version_number = '0.3.3.2'
+version_number = '0.3.4.2'
 # branch indicator is intentionally different across branches
 version_branch = ''
 
@@ -200,7 +200,7 @@ def link_overworld(world, player):
 
     categorize_world_regions(world, player)
 
-    if world.logic[player] in ('owglitches', 'nologic'):
+    if world.logic[player] in ('owglitches', 'hybridglitches', 'nologic'):
         create_owg_connections(world, player)
     
     # crossed shuffle
@@ -1044,10 +1044,10 @@ def shuffle_tiles(world, groups, result_list, do_grouped, forced_flips, player):
             raise GenerationException('Could not find valid tile flips')
 
         # tile shuffle happens here
-        removed = copy.deepcopy(nonflipped_groups)
+        removed = []
         if 0 < undefined_chance < 100:
-            for group in [g for g in groups if g not in nonflipped_groups]:
-                if group not in flipped_groups and random.randint(1, 100) > undefined_chance:
+            for group in groups:
+                if group[0] in nonflipped_groups or (group[0] not in flipped_groups and random.randint(1, 100) > undefined_chance):
                     removed.append(group)
 
         # save shuffled tiles to list
@@ -1072,7 +1072,7 @@ def shuffle_tiles(world, groups, result_list, do_grouped, forced_flips, player):
             attempts -= 1
             continue
         # ensure sanc can be placed in LW in certain modes
-        if not do_grouped and world.shuffle[player] not in ['vanilla', 'dungeonssimple', 'dungeonsfull', 'lean', 'swapped', 'crossed', 'insanity'] and world.mode[player] != 'inverted' and (world.doorShuffle[player] != 'crossed' or world.intensity[player] < 3 or world.mode[player] == 'standard'):
+        if not do_grouped and world.shuffle[player] in ['simple', 'restricted', 'full', 'district'] and world.mode[player] != 'inverted' and (world.doorShuffle[player] != 'crossed' or world.intensity[player] < 3 or world.mode[player] == 'standard'):
             free_dw_drops = parity[5] + (1 if world.shuffle_ganon[player] else 0)
             free_drops = 6 + (1 if world.mode[player] != 'standard' else 0) + (1 if world.shuffle_ganon[player] else 0)
             if free_dw_drops == free_drops:
@@ -1124,7 +1124,7 @@ def define_tile_groups(world, do_grouped, player):
             return False
         
         # sanctuary/chapel should not be flipped if S+Q guaranteed to output on that screen
-        if 0x13 in group and ((world.shuffle[player] in ['vanilla', 'dungeonssimple', 'dungeonsfull'] \
+        if 0x13 in group and ((world.shuffle[player] in ['vanilla', 'dungeonssimple', 'dungeonsfull', 'district'] \
                     and (world.mode[player] in ['standard', 'inverted'] or world.doorShuffle[player] != 'crossed' or world.intensity[player] < 3)) \
                 or (world.shuffle[player] in ['lite', 'lean'] and world.mode[player] == 'inverted')):
             return False
@@ -1138,24 +1138,31 @@ def define_tile_groups(world, do_grouped, player):
     groups.append([0x80])
     groups.append([0x81])
 
-    if world.shuffle[player] in ['vanilla', 'dungeonssimple', 'dungeonsfull', 'simple']:
-        merge_groups([[0x03, 0x0a], [0x28, 0x29]])
-
-    if world.shuffle[player] in ['vanilla', 'dungeonssimple', 'dungeonsfull', 'simple', 'restricted', 'full', 'lite']:
-        merge_groups([[0x13, 0x14]])
-
-    if world.shuffle[player] in ['vanilla', 'dungeonssimple', 'simple', 'restricted']:
-        merge_groups([[0x05, 0x07]])
-
-    if world.shuffle[player] == 'vanilla' or (world.mode[player] == 'standard' and world.shuffle[player] in ['dungeonssimple', 'dungeonsfull']):
+    # hyrule castle and sanctuary connector
+    if world.shuffle[player] in ['vanilla', 'district'] or (world.mode[player] == 'standard' and world.shuffle[player] in ['dungeonssimple', 'dungeonsfull']):
         merge_groups([[0x13, 0x14, 0x1b]])
 
+    # sanctuary and grave connector
+    if world.shuffle[player] in ['dungeonssimple', 'dungeonsfull', 'simple', 'restricted', 'full', 'lite']:
+        merge_groups([[0x13, 0x14]])
+
+    # cross-screen connector
+    if world.shuffle[player] in ['vanilla', 'dungeonssimple', 'dungeonsfull', 'simple', 'district']:
+        merge_groups([[0x03, 0x0a], [0x28, 0x29]])
+
+    # turtle rock connector
+    if world.shuffle[player] in ['vanilla', 'dungeonssimple', 'simple', 'restricted', 'district']:
+        merge_groups([[0x05, 0x07]])
+
+    # all non-parallel screens
     if world.owShuffle[player] == 'vanilla' and (world.owCrossed[player] == 'none' or do_grouped):
         merge_groups([[0x00, 0x2d, 0x80], [0x0f, 0x81], [0x1a, 0x1b], [0x28, 0x29], [0x30, 0x3a]])
 
+    # special case: non-parallel keep similar
     if world.owShuffle[player] == 'parallel' and world.owKeepSimilar[player] and (world.owCrossed[player] == 'none' or do_grouped):
         merge_groups([[0x28, 0x29]])
 
+    # whirlpool screens
     if not world.owWhirlpoolShuffle[player] and (world.owCrossed[player] == 'none' or do_grouped):
         merge_groups([[0x0f, 0x35], [0x12, 0x15, 0x33, 0x3f]])
 
@@ -1486,7 +1493,7 @@ def build_accessible_region_list(world, start_region, player, build_copy_world=F
                 elif exit.connected_region.name not in explored_regions \
                         and (exit.connected_region.type == region.type 
                             or exit.name in OWExitTypes['OWEdge'] or (cross_world and exit.name in (OWExitTypes['Portal'] + OWExitTypes['Mirror']))) \
-                        and (not region_rules or exit.access_rule(blank_state)) and (not ignore_ledges or exit.name not in OWExitTypes['Ledge']):
+                        and (not region_rules or exit.access_rule(blank_state)) and (not ignore_ledges or exit.name not in OWExitTypes['Ledge', 'OWG']):
                     explore_region(exit.connected_region.name, exit.connected_region)
     
     if build_copy_world:
@@ -1562,7 +1569,7 @@ def validate_layout(world, player):
             for dest_region in entrance_connectors[region_name]:
                 if dest_region not in explored_regions:
                     explore_region(dest_region)
-        if world.shuffle[player] not in ['insanity'] and region_name in sane_connectors:
+        if world.shuffle[player] not in ['district', 'insanity'] and region_name in sane_connectors:
             for dest_region in sane_connectors[region_name]:
                 if dest_region not in explored_regions:
                     explore_region(dest_region)
@@ -1619,11 +1626,13 @@ def validate_layout(world, player):
                         break
             # check if entrances in region could be used to access region
             if world.shuffle[player] != 'vanilla':
+                # TODO: For District ER, we need to check if there is a dropdown or connector that is able to connect
                 for entrance in [e for e in unreachable_regions[region_name].exits if e.spot_type == 'Entrance']:
-                    if (entrance.name == 'Links House' and (world.mode[player] == 'inverted' or not world.shufflelinks[player] or world.shuffle[player] in ['dungeonssimple', 'dungeonsfull', 'lite', 'lean'])) \
-                            or (entrance.name == 'Big Bomb Shop' and (world.mode[player] != 'inverted' or not world.shufflelinks[player] or world.shuffle[player] in ['dungeonssimple', 'dungeonsfull', 'lite', 'lean'])) \
-                            or (entrance.name == 'Ganons Tower' and (world.mode[player] != 'inverted' and not world.shuffle_ganon[player])) \
-                            or (entrance.name in ['Skull Woods First Section Door', 'Skull Woods Second Section Door (East)', 'Skull Woods Second Section Door (West)'] and world.shuffle[player] not in ['insanity']) \
+                    if (entrance.name == 'Links House' and ((not world.is_bombshop_start(player) and not world.shufflelinks[player]) or world.shuffle[player] in ['dungeonssimple', 'dungeonsfull', 'lite', 'lean'])) \
+                            or (entrance.name == 'Big Bomb Shop' and ((world.is_bombshop_start(player) and not world.shufflelinks[player]) or world.shuffle[player] in ['dungeonssimple', 'dungeonsfull', 'lite', 'lean'])) \
+                            or (entrance.name == 'Ganons Tower' and (not world.is_atgt_swapped(player) and not world.shuffle_ganon[player])) \
+                            or (entrance.name == 'Agahnims Tower' and (world.is_atgt_swapped(player) and not world.shuffle_ganon[player])) \
+                            or (entrance.name in ['Skull Woods First Section Door', 'Skull Woods Second Section Door (East)', 'Skull Woods Second Section Door (West)'] and world.shuffle[player] not in ['district', 'insanity']) \
                             or (entrance.name == 'Tavern North' and not world.shuffletavern[player]):
                         continue # these are fixed entrances and cannot be used for gaining access to region
                     if entrance.name not in drop_entrances \

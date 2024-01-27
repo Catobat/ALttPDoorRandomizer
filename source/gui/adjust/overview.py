@@ -107,6 +107,7 @@ def adjust_page(top, parent, settings):
           "reduce_flashing": "reduce_flashing",
           'msu_resume': 'msu_resume',
           "shuffle_sfx": "shuffle_sfx",
+          "shuffle_sfxinstruments": "shuffle_sfxinstruments",
           "shuffle_songinstruments": "shuffle_songinstruments",
         }
         guiargs = Namespace()
@@ -159,6 +160,7 @@ def adjust_page(top, parent, settings):
             "nobgm": "disablemusic",
             "reduce_flashing": "reduce_flashing",
             "shuffle_sfx": "shuffle_sfx",
+            "shuffle_sfxinstruments": "shuffle_sfxinstruments",
             "shuffle_songinstruments": "shuffle_songinstruments",
             "msu_resume": "msu_resume"
         }

@@ -139,6 +139,7 @@ SETTINGSTOPROCESS = {
       "uwpalettes": "uw_palettes",
       "reduce_flashing": "reduce_flashing",
       "shuffle_sfx": "shuffle_sfx",
+      "shuffle_sfxinstruments": "shuffle_sfxinstruments",
       "shuffle_songinstruments": "shuffle_songinstruments",
       'msu_resume': 'msu_resume',
     },
@@ -148,7 +149,7 @@ SETTINGSTOPROCESS = {
       "createrom": "create_rom",
       "calcplaythrough": "calc_playthrough",
       "print_custom_yaml": "print_custom_yaml",
-      "saveonexit": "saveonexit"
+      "settingsonload": "settingsonload"
     }
   },
   "startinventory": {

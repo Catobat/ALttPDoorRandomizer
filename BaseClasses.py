@@ -64,7 +64,6 @@ class World(object):
         self.dark_world_light_cone = False
         self.clock_mode = 'none'
         self.rupoor_cost = 10
-        self.aga_randomness = True
         self.lock_aga_door_in_escape = False
         self.save_and_quit_from_boss = True
         self.override_bomb_check = False
@@ -134,7 +133,7 @@ class World(object):
             set_player_attr('can_access_trock_front', None)
             set_player_attr('can_access_trock_big_chest', None)
             set_player_attr('can_access_trock_middle', None)
-            set_player_attr('fix_fake_world', logic[player] not in ['owglitches', 'nologic']
+            set_player_attr('fix_fake_world', logic[player] not in ['owglitches', 'hybridglitches', 'nologic']
                             or shuffle[player] in ['lean', 'swapped', 'crossed', 'insanity'])
             set_player_attr('mapshuffle', False)
             set_player_attr('compassshuffle', False)
@@ -170,7 +169,8 @@ class World(object):
             set_player_attr('door_self_loops', False)
             set_player_attr('door_type_mode', 'original')
             set_player_attr('trap_door_mode', 'optional')
-            set_player_attr('key_logic_algorithm', 'default')
+            set_player_attr('key_logic_algorithm', 'partial')
+            set_player_attr('aga_randomness', True)
 
             set_player_attr('shopsanity', False)
             set_player_attr('mixed_travel', 'prevent')
@@ -310,7 +310,7 @@ class World(object):
         return self.is_tile_swapped(0x03, player) and self.is_tile_swapped(0x1b, player)
 
     def is_bombshop_start(self, player):
-        return self.is_tile_swapped(0x2c, player) and (self.shuffle[player] in ['vanilla', 'dungeonssimple', 'dungeonsfull'] or not self.shufflelinks[player])
+        return self.is_tile_swapped(0x2c, player)
 
     def is_pyramid_open(self, player):
         if self.open_pyramid[player] == 'yes':
@@ -318,7 +318,7 @@ class World(object):
         elif self.open_pyramid[player] == 'no':
             return False
         else:
-            if self.shuffle[player] not in ['vanilla', 'dungeonssimple', 'dungeonsfull']:
+            if self.shuffle[player] not in ['vanilla', 'dungeonssimple', 'dungeonsfull', 'district']:
                 return False
             elif self.goal[player] in ['crystals', 'trinity', 'ganonhunt']:
                 return True
@@ -565,7 +565,7 @@ class World(object):
             if not sphere:
                 # ran out of places and did not finish yet, quit
                 if log_error:
-                    missing_locations = ", ".join([x.name for x in prog_locations])
+                    missing_locations = ", ".join([f'{x.name} (#{x.player})' for x in prog_locations])
                     logging.getLogger('').error(f'Cannot reach the following locations: {missing_locations}')
                 return False
 
@@ -600,8 +600,44 @@ class CollectionState(object):
             self.opened_doors = {player: set() for player in range(1, parent.players + 1)}
             self.dungeons_to_check = {player: defaultdict(dict) for player in range(1, parent.players + 1)}
         self.dungeon_limits = None
-        self.placing_item = None
+        self.placing_items = None
         # self.trace = None
+
+    def can_reach_from(self, spot, start, player=None):
+        old_state = self.copy()
+        # old_state.path = {old_state.world.get_region(start, player)}
+        old_state.stale[player] = False
+        old_state.reachable_regions[player] = dict()
+        old_state.blocked_connections[player] = dict()
+        rrp = old_state.reachable_regions[player]
+        bc = old_state.blocked_connections[player]
+
+        # init on first call - this can't be done on construction since the regions don't exist yet
+        start = self.world.get_region(start, player)
+        if start in self.reachable_regions[player]:
+            rrp[start] = self.reachable_regions[player][start]
+            for conn in start.exits:
+                bc[conn] = self.blocked_connections[player][conn]
+        else:
+            rrp[start] = CrystalBarrier.Orange
+            for conn in start.exits:
+                bc[conn] = CrystalBarrier.Orange
+
+        queue = deque(old_state.blocked_connections[player].items())
+
+        old_state.traverse_world(queue, rrp, bc, player)
+        if old_state.world.key_logic_algorithm[player] == 'default':
+            unresolved_events = [x for y in old_state.reachable_regions[player] for x in y.locations
+                                 if x.event and x.item and (x.item.smallkey or x.item.bigkey or x.item.advancement)
+                                 and x not in old_state.locations_checked and x.can_reach(old_state)]
+            unresolved_events = old_state._do_not_flood_the_keys(unresolved_events)
+            if len(unresolved_events) == 0:
+                old_state.check_key_doors_in_dungeons(rrp, player)
+
+        if self.world.get_region(spot, player) in rrp:
+            return True
+        else:
+            return False
 
     def update_reachable_regions(self, player):
         self.stale[player] = False
@@ -878,7 +914,7 @@ class CollectionState(object):
             return door_candidates
         door_candidates, skip = [], set()
         if (state.world.accessibility[player] != 'locations' and remaining_keys == 0 and dungeon_name != 'Universal'
-           and state.placing_item and state.placing_item.name == small_key_name):
+                and state.placing_items and any(i.name == small_key_name and i.player == player for i in state.placing_items)):
             key_logic = state.world.key_logic[player][dungeon_name]
             for door, paired in key_logic.sm_doors.items():
                 if door.name in key_logic.door_rules:
@@ -923,7 +959,7 @@ class CollectionState(object):
             player: defaultdict(dict, {name: copy.copy(checklist)
                                        for name, checklist in self.dungeons_to_check[player].items()})
             for player in range(1, self.world.players + 1)}
-        ret.placing_item = self.placing_item
+        ret.placing_items = self.placing_items
         return ret
 
     def apply_dungeon_exploration(self, rrp, player, dungeon_name, checklist):
@@ -1020,7 +1056,7 @@ class CollectionState(object):
             # try to resolve a name
             if resolution_hint == 'Location':
                 spot = self.world.get_location(spot, player)
-            elif resolution_hint in ['Entrance', 'OWEdge', 'OWTerrain', 'Ledge', 'Portal', 'Whirlpool', 'Mirror', 'Flute']:
+            elif resolution_hint in ['Entrance', 'OWEdge', 'OWTerrain', 'OpenTerrain', 'Ledge', 'OWG', 'Portal', 'Whirlpool', 'Mirror', 'Flute']:
                 spot = self.world.get_entrance(spot, player)
             else:
                 # default to Region
@@ -1168,6 +1204,12 @@ class CollectionState(object):
 
     def can_lift_rocks(self, player):
         return self.has('Power Glove', player) or self.has('Titans Mitts', player)
+    
+    def can_bomb_clip(self, region, player: int) -> bool: 
+        return self.is_not_bunny(region, player) and self.has('Pegasus Boots', player) and self.can_use_bombs(player)
+    
+    def can_dash_clip(self, region, player: int) -> bool: 
+        return self.is_not_bunny(region, player) and self.has('Pegasus Boots', player)
 
     def has_bottle(self, player):
         return self.bottle_count(player) > 0
@@ -1300,7 +1342,9 @@ class CollectionState(object):
         return self.has('Fire Rod', player) or (self.has('Bombos', player) and self.has_sword(player))
 
     def can_avoid_lasers(self, player):
-        return self.has('Mirror Shield', player) or self.has('Cane of Byrna', player) or self.has('Cape', player)
+        return (self.has('Mirror Shield', player) or
+                self.has('Cape', player) or 
+                (self.has('Cane of Byrna', player) and self.world.difficulty_adjustments[player] not in ['hard', 'expert']))
 
     def is_not_bunny(self, region, player):
         return self.has_Pearl(player) or not region.can_cause_bunny(player)
@@ -1345,6 +1389,9 @@ class CollectionState(object):
 
     def can_superbunny_mirror_with_sword(self, player):
         return self.has_Mirror(player) and self.has_sword(player)
+    
+    def can_bunny_pocket(self, player):
+        return self.has_Boots(player) and (self.has_Mirror(player) or self.has_bottle(player))
 
     def collect(self, item, event=False, location=None):
         if location:
@@ -1555,6 +1602,9 @@ class Region(object):
 
         return self.is_dark_world if self.world.mode[player] != 'inverted' else self.is_light_world
 
+    def is_outdoors(self):
+        return self.type in {RegionType.LightWorld, RegionType.DarkWorld}
+
     def __str__(self):
         return str(self.__unicode__())
 
@@ -1626,7 +1676,7 @@ class Entrance(object):
             if region not in explored_regions:
                 explored_regions[region] = path
                 for exit in region.exits:
-                    if exit.connected_region and (not ignore_ledges or exit.spot_type != 'Ledge') \
+                    if exit.connected_region and (not ignore_ledges or exit.spot_type not in ['Ledge', 'OWG']) \
                             and exit.name not in ['Dig Game To Ledge Drop'] \
                             and exit.access_rule(state):
                         if exit.connected_region == destination:
@@ -3414,10 +3464,10 @@ class Pot(object):
 # byte 0: DDDE EEEE (DR, ER)
 dr_mode = {"basic": 1, "crossed": 2, "vanilla": 0, "partitioned": 3, 'paired': 4}
 er_mode = {"vanilla": 0, "simple": 1, "restricted": 2, "full": 3, "crossed": 4, "insanity": 5, 'lite': 8,
-           'lean': 9, "dungeonsfull": 7, "dungeonssimple": 6, "swapped": 10}
+           'lean': 9, "dungeonsfull": 7, "dungeonssimple": 6, "swapped": 10, "district": 11}
 
 # byte 1: LLLW WSS? (logic, mode, sword)
-logic_mode = {"noglitches": 0, "minorglitches": 1, "nologic": 2, "owglitches": 3, "majorglitches": 4}
+logic_mode = {"noglitches": 0, "minorglitches": 1, "nologic": 2, "owglitches": 3, "majorglitches": 4, "hybridglitches": 5}
 world_mode = {"open": 0, "standard": 1, "inverted": 2}
 sword_mode = {"random": 0,  "assured": 1, "swordless": 2, "vanilla": 3}
 

@@ -23,6 +23,7 @@
       "noglitches",
       "minorglitches",
       "owglitches",
+      "hybridglitches",
       "nologic"
     ]
   },
@@ -208,6 +209,7 @@
       "full",
       "lite",
       "lean",
+      "district",
       "swapped",
       "crossed",
       "insanity",
@@ -344,6 +346,10 @@
     "type": "bool"
   },
   "shuffle_sfx": {
+    "action": "store_true",
+    "type": "bool"
+  },
+  "shuffle_sfxinstruments": {
     "action": "store_true",
     "type": "bool"
   },
@@ -575,11 +581,15 @@
     "action": "store_true",
     "type": "bool"
   },
-  "saveonexit": {
+  "aga_randomness": {
+    "action": "store_false",
+    "type": "bool"
+  },
+  "settingsonload": {
     "choices": [
-      "ask",
-      "always",
-      "never"
+      "default",
+      "saved",
+      "lastused"
     ]
   },
   "outputname": {},

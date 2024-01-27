@@ -48,11 +48,13 @@ class CustomSettings(object):
         meta = defaultdict(lambda: None, self.file_source['meta'])
         return meta['players']
 
-    def adjust_args(self, args):
+    def adjust_args(self, args, resolve_weighted=True):
         def get_setting(value: Any, default):
             if value or value == 0:
                 if isinstance(value, dict):
-                    return random.choices(list(value.keys()), list(value.values()), k=1)[0]
+                    if resolve_weighted:
+                        return random.choices(list(value.keys()), list(value.values()), k=1)[0]
+                    return None
                 else:
                     return value
             return default
@@ -147,8 +149,8 @@ class CustomSettings(object):
                     args.mapshuffle[p] = True
                     args.compassshuffle[p] = True
 
-                args.shufflebosses[p] = get_setting(settings['boss_shuffle'], args.shufflebosses[p])
-                args.shuffleenemies[p] = get_setting(settings['enemy_shuffle'], args.shuffleenemies[p])
+                args.shufflebosses[p] = get_setting(settings['boss_shuffle'], get_setting(settings['shufflebosses'], args.shufflebosses[p]))
+                args.shuffleenemies[p] = get_setting(settings['enemy_shuffle'], get_setting(settings['shuffleenemies'], args.shuffleenemies[p]))
                 args.enemy_health[p] = get_setting(settings['enemy_health'], args.enemy_health[p])
                 args.enemy_damage[p] = get_setting(settings['enemy_damage'], args.enemy_damage[p])
                 args.shufflepots[p] = get_setting(settings['shufflepots'], args.shufflepots[p])
@@ -167,6 +169,7 @@ class CustomSettings(object):
                 args.triforce_min_difference[p] = get_setting(settings['triforce_min_difference'], args.triforce_min_difference[p])
                 args.triforce_max_difference[p] = get_setting(settings['triforce_max_difference'], args.triforce_max_difference[p])
                 args.beemizer[p] = get_setting(settings['beemizer'], args.beemizer[p])
+                args.aga_randomness[p] = get_setting(settings['aga_randomness'], args.aga_randomness[p])
 
                 # mystery usage
                 args.usestartinventory[p] = get_setting(settings['usestartinventory'], args.usestartinventory[p])
@@ -183,6 +186,7 @@ class CustomSettings(object):
                 args.ow_palettes[p] = get_setting(settings['ow_palettes'], args.ow_palettes[p])
                 args.uw_palettes[p] = get_setting(settings['uw_palettes'], args.uw_palettes[p])
                 args.shuffle_sfx[p] = get_setting(settings['shuffle_sfx'], args.shuffle_sfx[p])
+                args.shuffle_sfxinstruments[p] = get_setting(settings['shuffle_sfxinstruments'], args.shuffle_sfxinstruments[p])
                 args.shuffle_songinstruments[p] = get_setting(settings['shuffle_songinstruments'], args.shuffle_songinstruments[p])
                 args.msu_resume[p] = get_setting(settings['msu_resume'], args.msu_resume[p])
 
@@ -262,10 +266,11 @@ class CustomSettings(object):
         self.world_rep['meta'] = meta_dict
         meta_dict['players'] = world.players
         meta_dict['algorithm'] = world.algorithm
-        meta_dict['seed'] = world.seed
         meta_dict['race'] = settings.race
         meta_dict['user_notes'] = settings.notes
         self.world_rep['settings'] = settings_dict
+        if world.precollected_items:
+            self.world_rep['start_inventory'] = start_inv = {}
         for p in self.player_range:
             settings_dict[p] = {}
             settings_dict[p]['ow_shuffle'] = world.owShuffle[p]
@@ -310,8 +315,8 @@ class CustomSettings(object):
             settings_dict[p]['keyshuffle'] = world.keyshuffle[p]
             settings_dict[p]['mapshuffle'] = world.mapshuffle[p]
             settings_dict[p]['compassshuffle'] = world.compassshuffle[p]
-            settings_dict[p]['shufflebosses'] = world.boss_shuffle[p]
-            settings_dict[p]['shuffleenemies'] = world.enemy_shuffle[p]
+            settings_dict[p]['boss_shuffle'] = world.boss_shuffle[p]
+            settings_dict[p]['enemy_shuffle'] = world.enemy_shuffle[p]
             settings_dict[p]['enemy_health'] = world.enemy_health[p]
             settings_dict[p]['enemy_damage'] = world.enemy_damage[p]
             settings_dict[p]['shufflepots'] = world.potshuffle[p]
@@ -323,6 +328,11 @@ class CustomSettings(object):
             settings_dict[p]['triforce_goal'] = world.treasure_hunt_count[p]
             settings_dict[p]['triforce_pool'] = world.treasure_hunt_total[p]
             settings_dict[p]['beemizer'] = world.beemizer[p]
+            settings_dict[p]['aga_randomness'] = world.aga_randomness[p]
+            if world.precollected_items:
+                start_inv[p] = []
+        for item in world.precollected_items:
+            start_inv[item.player].append(item.name)
 
             # rom adjust stuff
             # settings_dict[p]['sprite'] = world.sprite[p]
@@ -335,33 +345,41 @@ class CustomSettings(object):
             # settings_dict[p]['ow_palettes'] = world.ow_palettes[p]
             # settings_dict[p]['uw_palettes'] = world.uw_palettes[p]
             # settings_dict[p]['shuffle_sfx'] = world.shuffle_sfx[p]
+            # settings_dict[p]['shuffle_songinstruments'] = world.shuffle_songinstruments[p]
             # more settings?
 
     def record_info(self, world):
+        self.world_rep['meta']['seed'] = world.seed
         self.world_rep['bosses'] = bosses = {}
-        self.world_rep['start_inventory'] = start_inv = {}
+        self.world_rep['medallions'] = medallions = {}
         for p in self.player_range:
             bosses[p] = {}
-            start_inv[p] = []
+            medallions[p] = {}
         for dungeon in world.dungeons:
             for level, boss in dungeon.bosses.items():
                 location = dungeon.name if level is None else f'{dungeon.name} ({level})'
                 if boss and 'Agahnim' not in boss.name:
                     bosses[dungeon.player][location] = boss.name
-        for item in world.precollected_items:
-            start_inv[item.player].append(item.name)
-
-    def record_item_pool(self, world):
-        self.world_rep['item_pool'] = item_pool = {}
-        self.world_rep['medallions'] = medallions = {}
-        for p in self.player_range:
-            item_pool[p] = defaultdict(int)
-            medallions[p] = {}
-        for item in world.itempool:
-            item_pool[item.player][item.name] += 1
         for p, req_medals in world.required_medallions.items():
             medallions[p]['Misery Mire'] = req_medals[0]
             medallions[p]['Turtle Rock'] = req_medals[1]
+
+    def record_item_pool(self, world, use_custom_pool=False):
+        if not use_custom_pool or world.custom:
+            self.world_rep['item_pool'] = item_pool = {}
+            for p in self.player_range:
+                if not use_custom_pool or p in world.customitemarray:
+                    item_pool[p] = defaultdict(int)
+        if use_custom_pool and world.custom:
+            import source.classes.constants as CONST
+            for p in world.customitemarray:
+                for i, c in world.customitemarray[p].items():
+                    if c > 0:
+                        item = CONST.CUSTOMITEMLABELS[CONST.CUSTOMITEMS.index(i)]
+                        item_pool[p][item] += c
+        else:
+            for item in world.itempool:
+                item_pool[item.player][item.name] += 1
 
     def record_item_placements(self, world):
         self.world_rep['placements'] = placements = {}
