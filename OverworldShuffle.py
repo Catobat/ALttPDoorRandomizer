@@ -180,7 +180,7 @@ def link_overworld(world, player):
     else:
         connect_simple(world, 'Links House S&Q', 'Big Bomb Shop', player)
     
-    if not world.mode[player] == 'inverted':
+    if not world.is_dark_chapel_start(player):
         connect_simple(world, 'Sanctuary S&Q', 'Sanctuary', player)
     else:
         connect_simple(world, 'Sanctuary S&Q', 'Dark Sanctuary Hint', player)
@@ -885,6 +885,7 @@ def connect_two_way(world, edgename1, edgename2, player, connected_edges=None):
 
 def determine_forced_flips(world, tile_ow_groups, do_grouped, player):
     undefined_chance = 50
+    allow_flip_sanc = do_grouped
     flipped_groups = list()
     nonflipped_groups = list()
     merged_owids = list()
@@ -899,6 +900,8 @@ def determine_forced_flips(world, tile_ow_groups, do_grouped, player):
             forced_nonflips = list()
             if 'undefined_chance' in custom_flips:
                 undefined_chance = custom_flips['undefined_chance']
+            if not do_grouped and 'always_allow_flipped_sanctuary' in custom_flips:
+                allow_flip_sanc = custom_flips['always_allow_flipped_sanctuary'] in [1, True, "True", "true"]
             if 'force_flip' in custom_flips:
                 forced_flips = custom_flips['force_flip']
             if 'force_no_flip' in custom_flips:
@@ -974,7 +977,7 @@ def determine_forced_flips(world, tile_ow_groups, do_grouped, player):
     # Check if there are any groups that appear in both sets
     if any(group in flipped_groups for group in nonflipped_groups):
         raise GenerationException('Conflict found when flipping tiles')
-    return flipped_groups, nonflipped_groups, undefined_chance, merged_owids
+    return flipped_groups, nonflipped_groups, undefined_chance, allow_flip_sanc, merged_owids
 
 def shuffle_tiles(world, groups, result_list, do_grouped, forced_flips, player):
     (flipped_groups, nonflipped_groups, undefined_chance) = forced_flips
@@ -1124,9 +1127,9 @@ def define_tile_groups(world, do_grouped, player):
             return False
         
         # sanctuary/chapel should not be flipped if S+Q guaranteed to output on that screen
-        if 0x13 in group and ((world.shuffle[player] in ['vanilla', 'dungeonssimple', 'dungeonsfull', 'district'] \
-                    and (world.mode[player] in ['standard', 'inverted'] or world.doorShuffle[player] != 'crossed' or world.intensity[player] < 3)) \
-                or (world.shuffle[player] in ['lite', 'lean'] and world.mode[player] == 'inverted')):
+        if 0x13 in group and not allow_flip_sanc and ((world.shuffle[player] in ['vanilla', 'dungeonssimple', 'dungeonsfull', 'district'] \
+                    and (world.mode[player] in ['standard', 'inverted'] or world.doorShuffle[player] not in ['partitioned', 'crossed'] \
+                        or world.intensity[player] < 3)) or (world.shuffle[player] in ['lite', 'lean'] and world.mode[player] == 'inverted')):
             return False
         
         return True
@@ -1167,7 +1170,7 @@ def define_tile_groups(world, do_grouped, player):
         merge_groups([[0x0f, 0x35], [0x12, 0x15, 0x33, 0x3f]])
 
     # customizer adjustments
-    flipped_groups, nonflipped_groups, undefined_chance, merged_owids = determine_forced_flips(world, groups, do_grouped, player)
+    flipped_groups, nonflipped_groups, undefined_chance, allow_flip_sanc, merged_owids = determine_forced_flips(world, groups, do_grouped, player)
     for owids in merged_owids:
         merge_groups([owids])
 
@@ -1367,8 +1370,6 @@ def update_world_regions(world, player):
 def can_reach_smith(world, player):
     from Items import ItemFactory
     from BaseClasses import CollectionState
-
-    invFlag = world.mode[player] == 'inverted'
     
     def explore_region(region_name, region=None):
         nonlocal found
@@ -1407,7 +1408,7 @@ def can_reach_smith(world, player):
         start_region = 'Big Bomb Shop'
     explore_region(start_region)
     if not found:
-        if not invFlag:
+        if not world.is_dark_chapel_start(player):
             if world.intensity[player] >= 3 and world.doorShuffle[player] != 'vanilla':
                 sanc_mirror = world.get_entrance('Sanctuary Mirror Route', player)
                 explore_region(sanc_mirror.connected_region.name, sanc_mirror.connected_region)
@@ -1586,7 +1587,7 @@ def validate_layout(world, player):
             start_region = 'Big Bomb Shop Area'
         explore_region(start_region)
 
-    if world.shuffle[player] in ['vanilla', 'dungeonssimple', 'dungeonsfull', 'lite', 'lean'] and world.mode[player] == 'inverted':
+    if world.shuffle[player] in ['vanilla', 'dungeonssimple', 'dungeonsfull', 'lite', 'lean'] and world.is_dark_chapel_start(player):
         start_region = 'Dark Chapel Area'
         explore_region(start_region)
 

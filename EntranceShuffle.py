@@ -67,7 +67,7 @@ def link_entrances(world, player):
             connect_logical(world, entrancename, exitname, player, exitname.endswith(' Exit'))
         for entrancename, exitname in default_connector_connections + dropexit_connections:
             connect_logical(world, entrancename, exitname, player, True)
-        if invFlag:
+        if world.is_dark_chapel_start(player):
             world.get_entrance('Dark Sanctuary Hint Exit', player).connect(world.get_entrance('Dark Sanctuary Hint', player).parent_region)
         if world.is_bombshop_start(player):
             world.get_entrance('Big Bomb Shop Exit', player).connect(world.get_entrance('Big Bomb Shop', player).parent_region)
@@ -191,8 +191,8 @@ def link_entrances(world, player):
             connect_caves(world, lw_wdm_entrances, [], caves[0:c], player)
             connect_caves(world, lw_edm_entrances, [], caves[c:], player)
 
-        if invFlag:
-            # place dark sanc
+        # place dark sanc
+        if world.is_dark_chapel_start(player):
             place_dark_sanc(world, player)
         
         # place links house
@@ -225,7 +225,7 @@ def link_entrances(world, player):
         scramble_holes(world, player)
 
         # place dark sanc
-        if invFlag:
+        if world.is_dark_chapel_start(player):
             place_dark_sanc(world, player)
         
         # place links house
@@ -288,7 +288,7 @@ def link_entrances(world, player):
             caves.append('Ganons Tower Exit')
 
         # place dark sanc
-        if invFlag:
+        if world.is_dark_chapel_start(player):
             place_dark_sanc(world, player, list(zip(*drop_connections + dropexit_connections))[0])
         
         # place links house
@@ -342,7 +342,7 @@ def link_entrances(world, player):
                ([] if world.pottery[player] not in ['none', 'keys', 'dungeon'] else default_pot_connections) +
                ([] if world.take_any[player] == 'fixed' else default_takeany_connections)):
             connect_logical(world, entrancename, exitname, player, False)
-        if invFlag:
+        if world.is_dark_chapel_start(player):
             world.get_entrance('Dark Sanctuary Hint Exit', player).connect(world.get_entrance('Dark Sanctuary Hint', player).parent_region)
         
         suppress_spoiler = False
@@ -437,7 +437,7 @@ def link_entrances(world, player):
                ([] if world.pottery[player] not in ['none', 'keys', 'dungeon'] else default_pot_connections) +
                ([] if world.take_any[player] == 'fixed' else default_takeany_connections)):
             connect_logical(world, entrancename, exitname, player, False)
-        if invFlag:
+        if world.is_dark_chapel_start(player):
             world.get_entrance('Dark Sanctuary Hint Exit', player).connect(world.get_entrance('Dark Sanctuary Hint', player).parent_region)
         
         suppress_spoiler = False
@@ -512,7 +512,7 @@ def link_entrances(world, player):
         scramble_holes(world, player)
 
         # place dark sanc
-        if invFlag:
+        if world.is_dark_chapel_start(player):
             place_dark_sanc(world, player)
         
         # place links house
@@ -589,7 +589,7 @@ def link_entrances(world, player):
             connect_entrance(world, hole, hole_targets.pop(), player)
 
         # place dark sanc
-        if invFlag:
+        if world.is_dark_chapel_start(player):
             place_dark_sanc(world, player)
 
         # place links house

@@ -3351,7 +3351,7 @@ def remove_pair_type_if_present(door, world, player):
 def find_inaccessible_regions(world, player):
     world.inaccessible_regions[player] = []
     start_regions = ['Links House' if not world.is_bombshop_start(player) else 'Big Bomb Shop']
-    start_regions.append('Sanctuary' if world.mode[player] != 'inverted' else 'Dark Sanctuary Hint')
+    start_regions.append('Sanctuary' if not world.is_dark_chapel_start(player) else 'Dark Sanctuary Hint')
     regs = convert_regions(start_regions, world, player)
     if all(all(not e.connected_region for e in r.exits) for r in regs):
         # if attempting to find inaccessible regions before any connections made above, assume eventual access to Pyramid S&Q
@@ -3397,7 +3397,7 @@ def find_accessible_entrances(world, player, builder):
         start_regions = ['Hyrule Castle Courtyard']
     else:
         start_regions = ['Links House' if not world.is_bombshop_start(player) else 'Big Bomb Shop']
-        start_regions.append('Sanctuary' if world.mode[player] != 'inverted' else 'Dark Sanctuary Hint')
+        start_regions.append('Sanctuary' if not world.is_dark_chapel_start(player) else 'Dark Sanctuary Hint')
         start_regions.append('Pyramid Area' if not world.is_tile_swapped(0x1b, player) else 'Hyrule Castle Ledge')
 
     regs = convert_regions(start_regions, world, player)

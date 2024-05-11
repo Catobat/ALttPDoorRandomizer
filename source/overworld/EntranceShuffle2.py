@@ -439,11 +439,11 @@ def do_blacksmith(entrances, exits, avail):
             links_region = links_region.name
             blacksmith_options = list(get_accessible_entrances(links_region, avail, assumed_inventory, False, True, True))
         
-        if avail.inverted:
+        if avail.world.is_dark_chapel_start(avail.player):
             dark_sanc = avail.world.get_entrance('Dark Sanctuary Hint Exit', avail.player).connected_region.name
             blacksmith_options = list(OrderedDict.fromkeys(blacksmith_options + list(get_accessible_entrances(dark_sanc, avail, assumed_inventory, False, True, True))))
         elif avail.is_sanc_forced_in_hc():
-            sanc_region = avail.world.get_entrance('Sanctuary Exit',avail. player).connected_region
+            sanc_region = avail.world.get_entrance('Sanctuary Exit', avail.player).connected_region
             if sanc_region:
                 blacksmith_options = list(OrderedDict.fromkeys(blacksmith_options + list(get_accessible_entrances(sanc_region.name, avail, assumed_inventory, False, True, True))))
             else:
@@ -582,7 +582,7 @@ def do_holes_and_linked_drops(entrances, exits, avail, cross_world):
 
 
 def do_dark_sanc(entrances, exits, avail):
-    if avail.inverted:
+    if avail.world.is_dark_chapel_start(avail.player):
         ext = avail.world.get_entrance('Dark Sanctuary Hint Exit', avail.player)
         if 'Dark Sanctuary Hint' in exits:
             forbidden = list(Isolated_LH_Doors)
@@ -630,7 +630,7 @@ def do_links_house(entrances, exits, avail, cross_world):
                 forbidden.append('Mimic Cave')
             if avail.world.is_bombshop_start(avail.player) and (avail.inverted == avail.world.is_tile_swapped(0x03, avail.player)):
                 forbidden.extend(['Spectacle Rock Cave', 'Spectacle Rock Cave (Bottom)'])
-            if avail.inverted and avail.world.shuffle[avail.player] != 'district':
+            if avail.world.is_dark_chapel_start(avail.player) and avail.world.shuffle[avail.player] != 'district':
                 dark_sanc_region = avail.world.get_entrance('Dark Sanctuary Hint Exit', avail.player).connected_region.name
                 forbidden.extend(get_nearby_entrances(avail, dark_sanc_region))
             else:
@@ -669,7 +669,7 @@ def do_links_house(entrances, exits, avail, cross_world):
                 avail.links_on_mountain = True
                 
             # lobby shuffle means you ought to keep links house in the same world
-            sanc_spawn_can_be_dark = (not avail.inverted and avail.world.doorShuffle[avail.player] in ['partitioned', 'crossed']
+            sanc_spawn_can_be_dark = (not avail.world.is_dark_chapel_start(avail.player) and avail.world.doorShuffle[avail.player] in ['partitioned', 'crossed']
                                     and avail.world.intensity[avail.player] >= 3)
 
             if (cross_world and not sanc_spawn_can_be_dark) or avail.world.shuffle[avail.player] == 'district':

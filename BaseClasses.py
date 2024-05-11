@@ -316,6 +316,9 @@ class World(object):
     def is_bombshop_start(self, player):
         return self.is_tile_swapped(0x2c, player)
 
+    def is_dark_chapel_start(self, player):
+        return self.is_tile_swapped(0x13, player)
+
     def is_pyramid_open(self, player):
         if self.open_pyramid[player] == 'yes':
             return True

@@ -685,8 +685,6 @@ def patch_rom(world, rom, player, team, is_mystery=False):
                     rom.write_byte(0xDBB73 + exit.addresses, exit.target)
                     if exit.name == 'Tavern North':
                         rom.write_byte(0x157D0, exit.target)
-    if world.mode[player] == 'inverted':
-        patch_shuffled_dark_sanc(world, rom, player)
 
     # setup dr option flags based on experimental, etc.
     dr_flags = DROptions.Eternal_Mini_Bosses if world.doorShuffle[player] == 'vanilla' else DROptions.Town_Portal
@@ -745,7 +743,7 @@ def patch_rom(world, rom, player, team, is_mystery=False):
             return region.is_light_world and not region.is_dark_world
 
     # dark world spawns
-    sanc_name = 'Sanctuary' if world.mode[player] != 'inverted' else 'Dark Sanctuary Hint'
+    sanc_name = 'Sanctuary' if not world.is_dark_chapel_start(player) else 'Dark Sanctuary Hint'
     sanc_region = world.get_region(sanc_name, player)
     if should_be_bunny(sanc_region, world.mode[player]):
         rom.write_bytes(0x13fff2, [0x12, 0x00 if sanc_name == 'Sanctuary' else 0x01])
@@ -2050,7 +2048,7 @@ def write_strings(rom, world, player, team):
             entrances_to_hint.update(ItemEntrances)
             entrances_to_hint.update(ShopEntrances)
             entrances_to_hint.update(OtherEntrances)
-            if world.mode[player] != 'inverted':
+            if not world.is_dark_chapel_start(player):
                 entrances_to_hint.update({'Dark Sanctuary Hint': 'The dark sanctuary cave'})
         if world.shuffle[player] not in ['vanilla', 'dungeonssimple', 'dungeonsfull', 'lite', 'lean', 'district']:
             if world.shufflelinks[player]:
@@ -2368,10 +2366,10 @@ def write_strings(rom, world, player, team):
 
     # inverted spawn menu changes
     lh_text = "House"
-    if world.is_tile_swapped(0x2c, player):
+    if world.is_bombshop_start(player):
         lh_text = "Bomb Shop"
     sanc_text = "Sanctuary"
-    if world.mode[player] == 'inverted':
+    if world.is_dark_chapel_start(player):
         sanc_text = "Dark Chapel"
     tt['menu_start_2'] = "{MENU}\n{SPEED0}\n≥@'s " + lh_text + "\n " + sanc_text + "\n{CHOICE3}"
     tt['menu_start_3'] = "{MENU}\n{SPEED0}\n≥@'s " + lh_text + "\n " + sanc_text + "\n Mountain Cave\n{CHOICE2}"
@@ -2468,6 +2466,8 @@ def set_inverted_mode(world, player, rom, inverted_buffer):
         rom.write_byte(snes_to_pc(0x0ABFBB), 0x90)  # move mirror portal indicator to correct map (0xB0 normally)
         rom.write_byte(snes_to_pc(0x0280A6), 0xD0)  # use starting point prompt instead of start at pyramid
         
+    if world.is_dark_chapel_start(player):
+        patch_shuffled_dark_sanc(world, rom, player)
         write_int16(rom, snes_to_pc(0x02D8D4), 0x112)  # change sanctuary spawn point to dark sanc
         rom.write_bytes(snes_to_pc(0x02D8E8), [0x22, 0x22, 0x22, 0x23, 0x04, 0x04, 0x04, 0x05])
         write_int16(rom, snes_to_pc(0x02D91A), 0x0400)
@@ -2610,26 +2610,25 @@ def set_inverted_mode(world, player, rom, inverted_buffer):
         del world.data_tables[player].ow_enemy_table[0xab][5]  # remove castle gate warp
     if world.is_tile_swapped(0x29, player):
         rom.write_bytes(snes_to_pc(0x06B2AB), [0xF0, 0xE1, 0x05])  # frog pickup on contact
-    if world.is_tile_swapped(0x2c, player):
-        if world.is_bombshop_start(player):
-            rom.write_bytes(snes_to_pc(0x03F484), [0xFD, 0x4B, 0x68]) # place bed in bomb shop
-            
-            # spawn in bomb shop
-            patch_shuffled_bomb_shop(world, rom, player)
-            rom.write_byte(snes_to_pc(0x02D8D2), 0x1C)
-            rom.write_bytes(snes_to_pc(0x02D8E0), [0x23, 0x22, 0x23, 0x23, 0x18, 0x18, 0x18, 0x19])
-            rom.write_byte(snes_to_pc(0x02D919), 0x18)
-            rom.write_byte(snes_to_pc(0x02D927), 0x23)
-            write_int16(rom, snes_to_pc(0x02D934), 0x2398)
-            rom.write_byte(snes_to_pc(0x02D943), 0x18)
-            write_int16(rom, snes_to_pc(0x02D950), 0x0087)
-            write_int16(rom, snes_to_pc(0x02D95E), 0x0081)
-            rom.write_byte(snes_to_pc(0x02D9A4), 0x53)
+    if world.is_bombshop_start(player):
+        rom.write_bytes(snes_to_pc(0x03F484), [0xFD, 0x4B, 0x68]) # place bed in bomb shop
+        
+        # spawn in bomb shop
+        patch_shuffled_bomb_shop(world, rom, player)
+        rom.write_byte(snes_to_pc(0x02D8D2), 0x1C)
+        rom.write_bytes(snes_to_pc(0x02D8E0), [0x23, 0x22, 0x23, 0x23, 0x18, 0x18, 0x18, 0x19])
+        rom.write_byte(snes_to_pc(0x02D919), 0x18)
+        rom.write_byte(snes_to_pc(0x02D927), 0x23)
+        write_int16(rom, snes_to_pc(0x02D934), 0x2398)
+        rom.write_byte(snes_to_pc(0x02D943), 0x18)
+        write_int16(rom, snes_to_pc(0x02D950), 0x0087)
+        write_int16(rom, snes_to_pc(0x02D95E), 0x0081)
+        rom.write_byte(snes_to_pc(0x02D9A4), 0x53)
 
-            # disable custom exit on links house exit
-            rom.write_byte(snes_to_pc(0x02E225), 0x1C)
-            rom.write_byte(snes_to_pc(0x02DAEE), 0x1C)
-            rom.write_byte(snes_to_pc(0x02DB8C), 0x6C)
+        # disable custom exit on links house exit
+        rom.write_byte(snes_to_pc(0x02E225), 0x1C)
+        rom.write_byte(snes_to_pc(0x02DAEE), 0x1C)
+        rom.write_byte(snes_to_pc(0x02DB8C), 0x6C)
     if world.is_tile_swapped(0x2f, player):
         rom.write_bytes(snes_to_pc(0x1BC80D), [0xB2, 0x0B, 0x82])  # add warp under rock
         rom.write_byte(snes_to_pc(0x1BC590), 0x00) # remove secret portal
